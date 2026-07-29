@@ -1516,6 +1516,43 @@
       try { return await fn(); } catch(e) { return { data: null, error: e }; }
     }
 
+    // The `tasks` table columns are snake_case; the app's task objects are camelCase.
+    // These two helpers translate between the two so Supabase reads/writes actually
+    // hit real columns instead of 400ing on unrecognized field names.
+    const TASK_FIELD_DB_MAP = {
+      isRoutine: 'is_routine',
+      routineType: 'routine_type',
+      routineDay: 'routine_day',
+      routineTime: 'routine_time',
+      parentId: 'parent_id',
+      inTree: 'in_tree',
+      isApprovalRequired: 'is_approval_required'
+    };
+    // stickyColor / priority / isToday are UI-only fields with no backing column.
+    const TASK_FIELDS_LOCAL_ONLY = ['stickyColor', 'priority', 'isToday'];
+
+    function toDbTaskPayload(fields) {
+      const payload = {};
+      Object.keys(fields).forEach(key => {
+        if (TASK_FIELDS_LOCAL_ONLY.includes(key)) return;
+        payload[TASK_FIELD_DB_MAP[key] || key] = fields[key];
+      });
+      return payload;
+    }
+
+    function fromDbTask(row) {
+      return {
+        ...row,
+        isRoutine: row.is_routine,
+        routineType: row.routine_type,
+        routineDay: row.routine_day,
+        routineTime: row.routine_time,
+        parentId: row.parent_id,
+        inTree: row.in_tree,
+        isApprovalRequired: row.is_approval_required
+      };
+    }
+
     // Global State
     let departments = [];
     let users = [];
@@ -1612,15 +1649,18 @@
     document.addEventListener('DOMContentLoaded', async () => {
       initWhiteboardViewport();
       
+      let departmentsFromDb = false;
+      let usersFromDb = false;
+
       try {
                 const { data: dData, error: dErr } = await sbQuery(() => sbClient.from('departments').select('*'));
-    if (!dErr && dData && dData.length > 0) departments = dData;
-    
+    if (!dErr && dData && dData.length > 0) { departments = dData; departmentsFromDb = true; }
+
     const { data: uData, error: uErr } = await sbQuery(() => sbClient.from('users').select('*'));
-    if (!uErr && uData && uData.length > 0) users = uData;
-    
+    if (!uErr && uData && uData.length > 0) { users = uData; usersFromDb = true; }
+
     const { data: tData, error: tErr } = await sbQuery(() => sbClient.from('tasks').select('*'));
-        if (!tErr && tData && tData.length > 0) tasks = tData;
+        if (!tErr && tData && tData.length > 0) tasks = tData.map(fromDbTask);
 
         const { data: sData, error: sErr } = await sbQuery(() => sbClient.from('scheduled_tasks').select('*'));
         if (!sErr && sData) {
@@ -1632,9 +1672,11 @@
       } catch (e) {
         console.error('Supabase init load error:', e);
       }
-      
-      // Always load mock data if no tasks fetched
-      if (tasks.length === 0) {
+
+      // Only fill in the canned demo tasks when department/user data is ALSO mock —
+      // real departments/users have real UUIDs that these demo tasks don't reference,
+      // so mixing them in would leave every demo task pointing at a nonexistent dept/assignee.
+      if (tasks.length === 0 && !(departmentsFromDb && usersFromDb)) {
         tasks = [
           { id: 'mock-1', department_id: '11111111-1111-1111-1111-111111111111', initiative: 'アタックリストの精度向上', title: 'ターゲット企業50社のリストアップ', assignee_id: '66666666-6666-6666-6666-666666666666', status: 'completed', progress: 100, stickyColor: 'sticky-yellow', isRoutine: false, isToday: true, priority: 'high', x: 320, y: 280, parentId: null },
           { id: 'mock-2', department_id: '11111111-1111-1111-1111-111111111111', initiative: 'アタックリストの精度向上', title: '業界データベース自動抽出ツールの検証', assignee_id: '77777777-7777-7777-7777-777777777777', status: 'in-progress', progress: 40, stickyColor: 'sticky-blue', isRoutine: false, isToday: false, priority: 'mid', x: 320, y: 490, parentId: 'mock-1' },
@@ -1770,22 +1812,35 @@
           viewport.style.cursor = 'grab';
         }
         if (dragType) {
-          if (dragType === 'task' && dragNodeId) {
-            const mt = tasks.find(t => t.id === dragNodeId);
-            if (mt) if(sbClient) if(sbClient) sbClient.from('tasks').update({x: mt.x, y: mt.y}).eq('id', mt.id).catch(console.error);
-            Object.keys(initialDescendantPositions).forEach(cId => {
-              const child = tasks.find(t => t.id === cId);
-              if (child) if(sbClient) if(sbClient) sbClient.from('tasks').update({x: child.x, y: child.y}).eq('id', child.id).catch(console.error);
-            });
-          } else if (dragType === 'marker' && dragMarkerInit) {
-            Object.keys(initialDescendantPositions).forEach(tId => {
-              const child = tasks.find(t => t.id === tId);
-              if (child) if(sbClient) if(sbClient) sbClient.from('tasks').update({x: child.x, y: child.y}).eq('id', child.id).catch(console.error);
-            });
-          }
+          const finishedDragType = dragType;
+          const finishedDragNodeId = dragNodeId;
+          const finishedDescendantPositions = initialDescendantPositions;
+
+          // Reset drag state immediately so a persistence error below can never
+          // leave the note stuck following the cursor after the button is released.
           dragType = null;
           dragNodeId = null;
           dragMarkerInit = null;
+
+          try {
+            if (sbClient) {
+              if (finishedDragType === 'task' && finishedDragNodeId) {
+                const mt = tasks.find(t => t.id === finishedDragNodeId);
+                if (mt) sbClient.from('tasks').update({x: mt.x, y: mt.y}).eq('id', mt.id).then(({ error }) => { if (error) console.error(error); });
+                Object.keys(finishedDescendantPositions).forEach(cId => {
+                  const child = tasks.find(t => t.id === cId);
+                  if (child) sbClient.from('tasks').update({x: child.x, y: child.y}).eq('id', child.id).then(({ error }) => { if (error) console.error(error); });
+                });
+              } else if (finishedDragType === 'marker') {
+                Object.keys(finishedDescendantPositions).forEach(tId => {
+                  const child = tasks.find(t => t.id === tId);
+                  if (child) sbClient.from('tasks').update({x: child.x, y: child.y}).eq('id', child.id).then(({ error }) => { if (error) console.error(error); });
+                });
+              }
+            }
+          } catch (err) {
+            console.error(err);
+          }
         }
       });
     }
@@ -2266,12 +2321,13 @@
             const st = {
               id: newId,
               originalId: null,
+              date: currentCalendarDate,
               title: '新規タスク',
               h, m, duration: durationMins,
-              done: false
+              completed: false
             };
             window.scheduledTasks[currentCalendarDate].push(st);
-            if(sbClient) sbClient.from('scheduled_tasks').insert([st]).catch(console.error);
+            if(sbClient) sbClient.from('scheduled_tasks').insert([{ id: st.id, original_id: st.originalId, date: st.date, title: st.title, h: st.h, m: st.m, duration: st.duration, completed: st.completed }]).then(({ error }) => { if (error) console.error(error); });
             renderTimetable();
             
             setTimeout(() => {
@@ -2318,8 +2374,8 @@
         if (currentUserRole === 'manager' && (isSubmitted || isRevising)) {
           actionHtml = `
             <div style="display:flex; gap:6px;">
-              <button class="action-btn-primary" style="padding:4px 10px; font-size:0.75rem; background:#10B981;" onclick="approveTask(${t.id})">承認</button>
-              <button class="view-mode-btn" style="padding:4px 10px; font-size:0.75rem; border-color:#EF4444; color:#EF4444;" onclick="reviseTask(${t.id})">修正</button>
+              <button class="action-btn-primary" style="padding:4px 10px; font-size:0.75rem; background:#10B981;" onclick="approveTask('${t.id}')">承認</button>
+              <button class="view-mode-btn" style="padding:4px 10px; font-size:0.75rem; border-color:#EF4444; color:#EF4444;" onclick="reviseTask('${t.id}')">修正</button>
             </div>
           `;
         }
@@ -2451,14 +2507,14 @@
 
         const safeInit = (t.initiative || '').replace(/\\/g, '\\\\').replace(/'/g, "\\\\'");
         note.innerHTML = `
-          <div class="sticky-title" onclick="openEditTaskModal(${t.id})">${t.title}</div>
+          <div class="sticky-title" onclick="openEditTaskModal('${t.id}')">${t.title}</div>
           <div class="sticky-meta">
             <span>${t.deadline || '未定'}</span>
             <span style="font-weight:700;color:${st.color};">${t.progress}%</span>
           </div>
           <div class="sticky-actions-container">
-            <div class="sticky-icon-btn split-btn" title="タスク分解" onclick="event.stopPropagation(); openSplitModal(${t.id})">✂</div>
-            <div class="sticky-icon-btn" title="分岐追加" onclick="event.stopPropagation(); window.pendingParentId=${t.id}; window.pendingBranchX=${t.x + 200}; window.pendingBranchY=${t.y + 160}; openAddTaskForInitiative('${safeInit}')">+</div>
+            <div class="sticky-icon-btn split-btn" title="タスク分解" onclick="event.stopPropagation(); openSplitModal('${t.id}')">✂</div>
+            <div class="sticky-icon-btn" title="分岐追加" onclick="event.stopPropagation(); window.pendingParentId='${t.id}'; window.pendingBranchX=${t.x + 200}; window.pendingBranchY=${t.y + 160}; openAddTaskForInitiative('${safeInit}')">+</div>
           </div>
         `;
 
@@ -2663,7 +2719,7 @@
           </td>
           <td>${t.isRoutine ? '🔄 ルーティン' : 'ワンショット'}</td>
           <td>
-            <button class="view-mode-btn" style="padding:4px 10px; font-size:0.8rem;" onclick="openEditTaskModal(${t.id})">
+            <button class="view-mode-btn" style="padding:4px 10px; font-size:0.8rem;" onclick="openEditTaskModal('${t.id}')">
               編集
             </button>
           </td>
@@ -2766,7 +2822,7 @@
             <div class="task-content">
               <input type="text" value="${t.title}" onchange="updateScheduledTaskTitle('${t.id}', this.value)" />
               <div class="task-controls">
-                <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleScheduledTaskDone('${t.id}', this.checked)" title="完了" />
+                <input type="checkbox" ${t.completed ? 'checked' : ''} onchange="toggleScheduledTaskDone('${t.id}', this.checked)" title="完了" />
                 <span style="font-size:0.7rem; cursor:pointer;" onclick="unscheduleTask('${t.id}')">✖</span>
               </div>
             </div>
@@ -2794,15 +2850,15 @@
       if(!currentCalendarDate || !window.scheduledTasks[currentCalendarDate]) return;
       const t = window.scheduledTasks[currentCalendarDate].find(x => x.id === id);
       if(t) {
-        t.done = isDone;
-        if(sbClient) if(sbClient) sbClient.from('scheduled_tasks').update({ completed: isDone }).eq('id', id).eq('date', currentCalendarDate).catch(console.error);
+        t.completed = isDone;
+        if(sbClient) sbClient.from('scheduled_tasks').update({ completed: isDone }).eq('id', id).eq('date', currentCalendarDate).then(({ error }) => { if (error) console.error(error); });
       }
     }
 
     function unscheduleTask(id) {
       if(!currentCalendarDate || !window.scheduledTasks[currentCalendarDate]) return;
       window.scheduledTasks[currentCalendarDate] = window.scheduledTasks[currentCalendarDate].filter(x => x.id !== id);
-      if(sbClient) if(sbClient) sbClient.from('scheduled_tasks').delete().eq('id', id).eq('date', currentCalendarDate).catch(console.error);
+      if(sbClient) sbClient.from('scheduled_tasks').delete().eq('id', id).eq('date', currentCalendarDate).then(({ error }) => { if (error) console.error(error); });
       renderTimetable();
     }
 
@@ -2826,13 +2882,14 @@
               const st = {
                 id: newId,
                 originalId: taskId,
+                date: currentCalendarDate,
                 title: task.title,
                 h, m,
                 duration: 15, // Default 15 mins
-                done: false
+                completed: false
               };
               window.scheduledTasks[currentCalendarDate].push(st);
-              if(sbClient) sbClient.from('scheduled_tasks').insert([st]).catch(console.error);              
+              if(sbClient) sbClient.from('scheduled_tasks').insert([{ id: st.id, original_id: st.originalId, date: st.date, title: st.title, h: st.h, m: st.m, duration: st.duration, completed: st.completed }]).then(({ error }) => { if (error) console.error(error); });
               evt.item.remove();
               setTimeout(renderTimetable, 50); 
             } else {
@@ -2911,7 +2968,7 @@
       document.getElementById('modal-heading').innerText = '新規付箋タスクの追加';
       document.getElementById('modal-task-id').value = '';
       document.getElementById('modal-task-title').value = '';
-      document.getElementById('modal-task-assignee').value = '山田 太郎';
+      document.getElementById('modal-task-assignee').value = users[0]?.id || '';
       document.querySelector('input[name="modal-task-approval"][value="true"]').checked = true;
       document.getElementById('modal-task-routine-type').value = 'none';
       toggleRoutineInputs();
@@ -2940,7 +2997,12 @@
       document.getElementById('modal-task-id').value = task.id;
       document.getElementById('modal-task-title').value = task.title;
       document.getElementById('modal-task-assignee').value = task.assignee_id || '';
-      
+
+      const type = task.type === 'personal' ? 'personal' : 'business';
+      document.querySelector(`input[name="modal-task-type"][value="${type}"]`).checked = true;
+      document.getElementById('modal-task-initiative').value = task.initiative || '';
+      toggleTaskTypeInputs();
+
       const appReq = task.isApprovalRequired !== false;
       document.querySelector(`input[name="modal-task-approval"][value="${appReq}"]`).checked = true;
       document.getElementById('modal-task-routine-type').value = task.routineType || (task.isRoutine ? 'weekly' : 'none');
@@ -3036,7 +3098,7 @@
           parentId: origTask.parentId
         };
         tasks.push(newTask);
-        if(sbClient) if(sbClient) sbClient.from('tasks').insert([newTask]).catch(console.error);
+        if(sbClient) sbClient.from('tasks').insert([toDbTaskPayload(newTask)]).then(({ error }) => { if (error) console.error(error); });
       });
 
       // Update child tasks to point to the LAST generated task
@@ -3062,7 +3124,8 @@
     function saveTaskModal() {
       const idVal = document.getElementById('modal-task-id').value;
       const title = document.getElementById('modal-task-title').value.trim();
-      const assignee = document.getElementById('modal-task-assignee').value;
+      const assignee_id = document.getElementById('modal-task-assignee').value;
+      const taskType = document.querySelector('input[name="modal-task-type"]:checked').value;
       const progress = parseInt(document.getElementById('modal-task-progress-range').value);
       const isApprovalRequired = document.querySelector('input[name="modal-task-approval"]:checked').value === 'true';
       const routineType = document.getElementById('modal-task-routine-type').value;
@@ -3093,7 +3156,7 @@
           task.routineDay = routineDay;
           task.routineTime = routineTime;
           task.isRoutine = (routineType !== 'none');
-          if(sbClient) if(sbClient) sbClient.from('tasks').update({ type: task.type, title: task.title, assignee_id: task.assignee_id, status: task.status, progress: task.progress, isApprovalRequired: task.isApprovalRequired, routineType: task.routineType, routineDay: task.routineDay, routineTime: task.routineTime, isRoutine: task.isRoutine, initiative: task.initiative }).eq('id', task.id).catch(console.error);
+          if(sbClient) sbClient.from('tasks').update(toDbTaskPayload({ type: task.type, title: task.title, assignee_id: task.assignee_id, status: task.status, progress: task.progress, isApprovalRequired: task.isApprovalRequired, routineType: task.routineType, routineDay: task.routineDay, routineTime: task.routineTime, isRoutine: task.isRoutine, initiative: task.initiative })).eq('id', task.id).then(({ error }) => { if (error) console.error(error); });
         }
       } else {
         const newId = crypto.randomUUID();
@@ -3139,12 +3202,12 @@
           const childTask = tasks.find(t => t.id === window.pendingChildId);
           if (childTask) {
             childTask.parentId = newId;
-            if(sbClient) if(sbClient) sbClient.from('tasks').update({parentId: newId}).eq('id', childTask.id).catch(console.error);
+            if(sbClient) sbClient.from('tasks').update(toDbTaskPayload({parentId: newId})).eq('id', childTask.id).then(({ error }) => { if (error) console.error(error); });
           }
         }
 
         tasks.push(newTask);
-        if(sbClient) if(sbClient) sbClient.from('tasks').insert([newTask]).catch(console.error);
+        if(sbClient) sbClient.from('tasks').insert([toDbTaskPayload(newTask)]).then(({ error }) => { if (error) console.error(error); });
       }
 
       window.pendingParentId = null;
@@ -3163,7 +3226,7 @@
 
       if (confirm('このタスクを削除してもよろしいですか？')) {
         tasks = tasks.filter(t => t.id !== idVal && t.id !== parseInt(idVal));
-        if(sbClient) if(sbClient) sbClient.from('tasks').delete().eq('id', idVal).catch(console.error);
+        if(sbClient) sbClient.from('tasks').delete().eq('id', idVal).then(({ error }) => { if (error) console.error(error); });
         closeModal('task-modal');
         renderAllViews();
       }

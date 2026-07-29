@@ -1,0 +1,7 @@
+DB構成案と機能との接続
+＜tasks＞
+・id
+・department_id
+・assignee_id
+・
+・
