@@ -1,0 +1,3203 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Tend Portal | 業務可視化・目標達成ポータル</title>
+  <!-- Google Fonts: Noto Sans JP, Plus Jakarta Sans, and Klee One for Whiteboard Marker style -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  
+  <link href="https://fonts.googleapis.com/css2?family=Klee+One:wght@600;700&family=Noto+Sans+JP:wght@300;400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <!-- SortableJS for Drag and Drop -->
+  <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script>
+    function dropTaskToTree(e) {
+      e.preventDefault();
+      const taskId = e.dataTransfer.getData('text/plain');
+      if (!taskId) return;
+      
+      const task = tasks.find(t => t.id === taskId);
+      if (task) {
+        // Calculate position relative to canvas layer considering scroll
+        const layer = document.getElementById('wb-canvas-layer');
+        const viewport = document.getElementById('wb-viewport');
+        const rect = layer.getBoundingClientRect();
+        
+        task.x = e.clientX - rect.left;
+        task.y = e.clientY - rect.top;
+        task.inTree = true;
+        
+        renderAllViews();
+        renderInteractiveWhiteboard();
+      }
+    }
+  </script>
+  
+  <style>
+    /* ==========================================================================
+       DESIGN SYSTEM & CSS VARIABLES
+       ========================================================================== */
+    :root {
+      --bg-main: #F8FAFC;
+      --bg-surface: #FFFFFF;
+      --bg-surface-secondary: #F1F5F9;
+      --bg-dark: #0F172A;
+
+      --text-primary: #0F172A;
+      --text-secondary: #475569;
+      --text-muted: #94A3B8;
+      --text-white: #FFFFFF;
+
+      --brand-primary: #1E293B;       /* 知的な深い紺色 */
+      --brand-accent: #0EA5E9;        /* 清涼感のあるアクセントブルー */
+      --brand-accent-hover: #0284C7;
+
+      --status-unstarted: #94A3B8;    /* 未着手 */
+      --status-in-progress: #3B82F6;  /* 着手 */
+      --status-sixty: #8B5CF6;        /* 60%完了 */
+      --status-submitted: #F59E0B;    /* 承認申請中 */
+      --status-completed: #10B981;    /* 完了 */
+
+      --border-color: #E2E8F0;
+
+      --shadow-sm: 0 1px 2px 0 rgba(15, 23, 42, 0.05);
+      --shadow-md: 0 4px 6px -1px rgba(15, 23, 42, 0.08), 0 2px 4px -2px rgba(15, 23, 42, 0.04);
+      --shadow-lg: 0 10px 25px -5px rgba(15, 23, 42, 0.1), 0 8px 10px -6px rgba(15, 23, 42, 0.04);
+
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+      --radius-full: 9999px;
+
+      --font-base: 'Noto Sans JP', 'Plus Jakarta Sans', sans-serif;
+      --font-marker: 'Klee One', 'Noto Sans JP', cursive;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: var(--font-base);
+      background-color: var(--bg-main);
+      color: var(--text-primary);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      padding-bottom: 60px;
+      user-select: none;
+    }
+
+    /* Header Structure */
+    .app-header {
+      background-color: var(--bg-dark);
+      color: var(--text-white);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      box-shadow: var(--shadow-md);
+    }
+
+    .header-container {
+      max-width: 1360px;
+      margin: 0 auto;
+      padding: 0 24px;
+      height: 70px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .brand-logo {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 700;
+      font-size: 1.25rem;
+      letter-spacing: 0.03em;
+    }
+
+    .brand-logo svg {
+      width: 32px;
+      height: 32px;
+      color: var(--brand-accent);
+    }
+
+    .nav-tabs {
+      display: flex;
+      gap: 6px;
+      background-color: rgba(255, 255, 255, 0.08);
+      padding: 4px;
+      border-radius: var(--radius-md);
+    }
+
+    .nav-tab-btn {
+      background: transparent;
+      border: none;
+      color: #94A3B8;
+      padding: 8px 16px;
+      font-size: 0.9rem;
+      font-weight: 500;
+      font-family: inherit;
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .nav-tab-btn:hover {
+      color: var(--text-white);
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .nav-tab-btn.active {
+      background-color: var(--brand-accent);
+      color: var(--text-white);
+      font-weight: 600;
+    }
+
+    .user-profile {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.875rem;
+    }
+
+    .avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-full);
+      background: linear-gradient(135deg, #38BDF8, #818CF8);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 700;
+      font-size: 0.85rem;
+    }
+
+    /* Main Container */
+    .main-container {
+      max-width: 1360px;
+      margin: 32px auto 0;
+      padding: 0 24px;
+      transition: padding-right 0.3s ease;
+    }
+    .main-container.with-drawer {
+      padding-right: 424px;
+    }
+
+    .view-section {
+      display: none;
+      animation: fadeIn 0.3s ease-in-out;
+    }
+
+    .view-section.active {
+      display: block;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .section-header {
+      margin-bottom: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+    }
+
+    .section-title {
+      font-size: 1.75rem;
+      font-weight: 700;
+      color: var(--brand-primary);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .section-subtitle {
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      margin-top: 4px;
+    }
+
+    /* Top Page Cards */
+    .grid-3-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 20px;
+      margin-bottom: 32px;
+    }
+
+    .portal-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      padding: 24px;
+      box-shadow: var(--shadow-sm);
+      transition: all 0.25s ease;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .portal-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4px;
+      height: 100%;
+      background: var(--brand-accent);
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+
+    .portal-card:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+      border-color: #CBD5E1;
+    }
+
+    .portal-card:hover::before {
+      opacity: 1;
+    }
+
+    .card-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: var(--radius-md);
+      background: #F0F9FF;
+      color: var(--brand-accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 16px;
+    }
+
+    .card-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+
+    .card-desc {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    .card-footer-link {
+      margin-top: 16px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--brand-accent);
+    }
+
+    /* Department Selector */
+    .dept-selector-bar {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      padding: 8px 12px;
+      border-radius: var(--radius-md);
+      margin-bottom: 24px;
+    }
+
+    .dept-btn {
+      padding: 8px 18px;
+      border-radius: var(--radius-sm);
+      border: none;
+      background: transparent;
+      font-family: inherit;
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .dept-btn.active {
+      background: var(--brand-primary);
+      color: var(--text-white);
+      font-weight: 600;
+      box-shadow: var(--shadow-sm);
+    }
+
+    /* Monthly Goal Card */
+    .goal-hero-card {
+      background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+      color: var(--text-white);
+      border-radius: var(--radius-lg);
+      padding: 24px 32px;
+      margin-bottom: 24px;
+      box-shadow: var(--shadow-md);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .goal-label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--brand-accent);
+      margin-bottom: 6px;
+    }
+
+    .goal-text {
+      font-size: 1.5rem;
+      font-weight: 700;
+      line-height: 1.4;
+      margin-bottom: 12px;
+    }
+
+    .goal-meta {
+      display: flex;
+      gap: 24px;
+      font-size: 0.875rem;
+      color: #94A3B8;
+    }
+
+    .goal-meta-item strong {
+      color: var(--text-white);
+    }
+
+    /* View Switcher Bar */
+    .view-mode-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+      background: var(--bg-surface);
+      padding: 12px 20px;
+      border-radius: var(--radius-md);
+      border: 1px solid var(--border-color);
+    }
+
+    .view-mode-tabs {
+      display: flex;
+      gap: 8px;
+    }
+
+    .view-mode-btn {
+      padding: 8px 16px;
+      border: 1px solid var(--border-color);
+      background: var(--bg-main);
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+    }
+
+    .view-mode-btn.active {
+      background: var(--brand-accent);
+      color: var(--text-white);
+      border-color: var(--brand-accent);
+      font-weight: 600;
+    }
+
+    .action-btn-primary {
+      background: var(--brand-primary);
+      color: var(--text-white);
+      border: none;
+      padding: 9px 18px;
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: background 0.2s ease;
+    }
+
+    .action-btn-primary:hover {
+      background: #334155;
+    }
+
+    /* ==========================================================================
+       WHITEBOARD VIEWPORT (グループドラッグ・無限キャンバス・完全中心接続)
+       ========================================================================== */
+    .whiteboard-viewport {
+      width: 100%;
+      height: 750px;
+      background-color: #F8FAFC;
+      background-image: radial-gradient(#CBD5E1 1.2px, transparent 1.2px);
+      background-size: 24px 24px;
+      border: 6px solid #CBD5E1;
+      border-radius: var(--radius-lg);
+      position: relative;
+      overflow: auto;
+      
+      box-shadow: inset 0 2px 8px rgba(0,0,0,0.06), var(--shadow-md);
+    }
+
+    
+
+    .whiteboard-canvas-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4000px;
+      height: 3000px;
+      transform-origin: 0 0;
+    }
+
+    /* Floating Zoom & Toolbar */
+    .zoom-controls-bar {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      z-index: 50;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(8px);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 6px 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      box-shadow: var(--shadow-md);
+    }
+
+    .zoom-btn {
+      padding: 6px 12px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-color);
+      background: white;
+      font-weight: 700;
+      font-size: 0.85rem;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s ease;
+    }
+
+    .zoom-btn:hover {
+      background: var(--bg-surface-secondary);
+      border-color: var(--brand-accent);
+      color: var(--brand-accent);
+    }
+
+    .zoom-level-text {
+      font-size: 0.85rem;
+      font-weight: 700;
+      min-width: 48px;
+      text-align: center;
+      color: var(--text-secondary);
+    }
+
+    /* Infinite SVG Layer (Never clips offscreen!) */
+    .wb-svg-layer {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 4000px;
+      height: 3000px;
+      overflow: visible;
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .branch-path {
+      pointer-events: stroke;
+      cursor: pointer;
+      stroke: #64748B;
+      stroke-width: 3px;
+      stroke-dasharray: 6 3;
+      fill: none;
+      transition: stroke 0.2s ease, stroke-width 0.2s ease;
+    }
+
+    .branch-path:hover {
+      stroke: #0EA5E9;
+      stroke-width: 5px;
+      stroke-dasharray: none;
+    }
+
+    .branch-add-node-btn {
+      pointer-events: all;
+      cursor: pointer;
+    }
+
+    .branch-add-node-inner {
+      transition: transform 0.15s ease;
+      transform-origin: center;
+    }
+
+    .branch-add-node-btn:hover .branch-add-node-inner {
+      transform: scale(1.35);
+    }
+
+    /* Root Goal Node (Exact Center Bottom Line Start) */
+    .wb-root-node {
+      position: absolute;
+      top: 40px;
+      left: 700px;
+      margin-left: -270px;
+      z-index: 5;
+      width: 540px;
+      background: #FFFFFF;
+      border: 2px dashed #64748B;
+      border-radius: var(--radius-md);
+      padding: 14px 24px;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+    }
+
+    .wb-root-label {
+      font-family: var(--font-marker);
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #0F172A;
+      background: linear-gradient(180deg, transparent 65%, rgba(56, 189, 248, 0.4) 65%);
+      display: inline-block;
+      padding: 0 6px;
+    }
+
+    /* Key Initiatives DRAGGABLE Marker Headers */
+    .wb-marker-node {
+      position: absolute;
+      z-index: 8;
+      padding: 8px 16px;
+      text-align: center;
+      
+    }
+
+    .wb-marker-node:active {
+      cursor: grabbing;
+    }
+
+    .wb-marker-title {
+      font-family: var(--font-marker);
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #0F172A;
+      display: inline-block;
+      position: relative;
+      padding: 6px 16px;
+      background: rgba(254, 240, 138, 0.85);
+      border-radius: 6px;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.06);
+      transform: rotate(-1deg);
+      border: 1px solid rgba(250, 204, 21, 0.6);
+    }
+
+    /* STICKY NOTES ABSOLUTE DRAGGABLE NODES */
+    .sticky-note-node {
+      position: absolute;
+      z-index: 10;
+      width: 180px;
+      padding: 8px 10px 18px;
+      border-radius: 2px 2px 10px 2px;
+      box-shadow: 3px 6px 14px rgba(15, 23, 42, 0.12), 0 1px 3px rgba(0,0,0,0.05);
+      font-family: var(--font-base);
+    }
+
+    .sticky-note-node:active {
+      cursor: grabbing;
+      box-shadow: 8px 18px 30px rgba(15, 23, 42, 0.22);
+      z-index: 25;
+    }
+
+    .sticky-note-node::before {
+      content: '';
+      position: absolute;
+      top: -9px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 48px;
+      height: 14px;
+      background: rgba(255, 255, 255, 0.65);
+      border: 1px solid rgba(203, 213, 225, 0.8);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+      z-index: 3;
+    }
+
+    .sticky-yellow { background: #FEF9C3; border: 1px solid #FDE047; color: #713F12; }
+    .sticky-blue   { background: #E0F2FE; border: 1px solid #7DD3FC; color: #0C4A6E; }
+    .sticky-green  { background: #DCFCE7; border: 1px solid #86EFAC; color: #14532D; }
+    .sticky-purple { background: #F3E8FF; border: 1px solid #D8B4FE; color: #581C87; }
+
+    .sticky-note-node.submitted {
+      border: 2.5px solid #F59E0B;
+      background: #FEF3C7;
+      box-shadow: 0 0 15px rgba(245, 158, 11, 0.35);
+    }
+
+    .sticky-title {
+      font-weight: 700;
+      font-size: 0.8rem;
+      line-height: 1.4;
+      margin-bottom: 4px;
+      cursor: pointer;
+    }
+
+    .sticky-meta {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.68rem;
+      margin-top: 4px;
+      padding-top: 4px;
+      border-top: 1px dashed rgba(0,0,0,0.12);
+    }
+
+    /* Small circular branch-add button on card bottom center */
+    
+
+    /* Table View Styles */
+    .table-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+
+    .custom-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.9rem;
+    }
+
+    .custom-table th {
+      background: #F8FAFC;
+      color: var(--text-secondary);
+      font-weight: 600;
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .custom-table td {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-color);
+      color: var(--text-primary);
+      vertical-align: middle;
+    }
+
+    .custom-table tr:hover {
+      background-color: #F8FAFC;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 12px;
+      border-radius: var(--radius-full);
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .status-badge.unstarted { background: #F1F5F9; color: #64748B; }
+    .status-badge.in-progress { background: #EFF6FF; color: #2563EB; }
+    .status-badge.sixty { background: #F3E8FF; color: #7C3AED; }
+    .status-badge.submitted { background: #FEF3C7; color: #D97706; }
+    .status-badge.completed { background: #D1FAE5; color: #059669; }
+
+    .tag-badge {
+      font-size: 0.725rem;
+      padding: 2px 8px;
+      border-radius: var(--radius-full);
+      font-weight: 600;
+    }
+
+    .tag-routine { background: #F1F5F9; color: #475569; border: 1px solid #CBD5E1; }
+    .tag-submitted { background: #FEF3C7; color: #D97706; border: 1px solid #FCD34D; }
+
+    /* Student View */
+    .intern-banner {
+      background: linear-gradient(135deg, #0EA5E9, #2563EB);
+      color: white;
+      padding: 24px;
+      border-radius: var(--radius-lg);
+      margin-bottom: 24px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .today-task-card {
+      background: var(--bg-surface);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-md);
+      padding: 18px 24px;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      box-shadow: var(--shadow-sm);
+      transition: all 0.2s ease;
+    }
+
+    .today-task-card:hover {
+      box-shadow: var(--shadow-md);
+      border-color: var(--brand-accent);
+    }
+
+    .today-task-left {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .priority-pill {
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: var(--radius-sm);
+    }
+
+    .priority-high { background: #FEE2E2; color: #DC2626; }
+    .priority-mid { background: #FEF3C7; color: #D97706; }
+    .priority-low { background: #E0F2FE; color: #0369A1; }
+
+    
+    /* Custom Slider UI */
+    .slider-tick {
+      position: absolute;
+      top: -1px;
+      width: 14px;
+      height: 14px;
+      background: white;
+      border: 3px solid #0EA5E9;
+      border-radius: 50%;
+      transform: translateX(-50%);
+    }
+    .slider-tick span {
+      position: absolute;
+      top: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 0.75rem;
+      color: #64748B;
+      text-align: center;
+      width: 60px;
+      line-height: 1.3;
+      font-weight: 600;
+    }
+
+    
+    .sticky-actions-container {
+      position: absolute;
+      bottom: -12px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 8px;
+      opacity: 0;
+      transition: opacity 0.15s ease;
+      z-index: 20;
+    }
+    .sticky-note-node:hover .sticky-actions-container {
+      opacity: 1;
+    }
+    .wb-marker-node:hover .sticky-actions-container {
+      opacity: 1;
+    }
+    .sticky-icon-btn {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background: #0EA5E9;
+      color: white;
+      border: 2px solid white;
+      font-size: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.2);
+      transition: transform 0.1s ease, background 0.1s ease;
+    }
+    .sticky-icon-btn:hover {
+      transform: scale(1.15);
+      background: #0284C7;
+    }
+    .sticky-icon-btn.split-btn {
+      background: #8B5CF6;
+    }
+    .sticky-icon-btn.split-btn:hover {
+      background: #7C3AED;
+    }
+
+    /* Modal Styling */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      background: rgba(15, 23, 42, 0.5);
+      backdrop-filter: blur(4px);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal-card {
+      background: var(--bg-surface);
+      border-radius: var(--radius-lg);
+      width: 100%;
+      max-width: 560px;
+      padding: 32px;
+      box-shadow: var(--shadow-lg);
+      position: relative;
+      animation: modalSlideUp 0.25s ease-out;
+    }
+
+    @keyframes modalSlideUp {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .modal-close-btn {
+      position: absolute;
+      top: 20px;
+      right: 20px;
+      background: transparent;
+      border: none;
+      font-size: 1.25rem;
+      cursor: pointer;
+      color: var(--text-muted);
+    }
+
+    .modal-title {
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--brand-primary);
+      margin-bottom: 20px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-label {
+      display: block;
+      font-size: 0.875rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 8px;
+    }
+
+    .form-input, .form-select {
+      width: 100%;
+      padding: 10px 14px;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      font-family: inherit;
+      font-size: 0.9rem;
+      background: var(--bg-main);
+      color: var(--text-primary);
+    }
+
+    .status-stage-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+      margin-top: 8px;
+    }
+
+    .status-stage-btn {
+      padding: 8px 4px;
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius-sm);
+      background: white;
+      font-family: inherit;
+      font-size: 0.75rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      cursor: pointer;
+      text-align: center;
+      transition: all 0.2s ease;
+    }
+
+    .status-stage-btn.selected {
+      background: var(--brand-primary);
+      color: white;
+      border-color: var(--brand-primary);
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 28px;
+      padding-top: 20px;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .btn-danger-outline {
+      background: transparent;
+      border: 1px solid #FCA5A5;
+      color: #EF4444;
+      padding: 8px 14px;
+      border-radius: var(--radius-sm);
+      font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .demo-notice {
+      background: #EFF6FF;
+      border: 1px solid #BFDBFE;
+      border-radius: var(--radius-md);
+      padding: 12px 18px;
+      font-size: 0.875rem;
+      color: #1E40AF;
+      margin-bottom: 20px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    /* Drawer UI */
+    .drawer-container {
+      position: fixed; top: 70px; right: 0; width: 400px; height: calc(100vh - 70px);
+      background: var(--bg-surface); z-index: 950;
+      box-shadow: -4px 0 15px rgba(0,0,0,0.1);
+      visibility: hidden;
+      transform: translateX(100%); /* hidden by default */
+      transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), visibility 0.3s, width 0.3s ease;
+      display: flex; flex-direction: column;
+    }
+    .drawer-container.visible {
+      visibility: visible;
+      transform: translateX(0);
+    }
+    .drawer-container.expanded {
+      width: 80vw;
+    }
+    .drawer-task-list-container { display: block; }
+    .drawer-container.expanded .drawer-task-list-container { display: none; }
+    .drawer-table-view { display: none; }
+    .drawer-container.expanded .drawer-table-view { display: block; width: 100%; height: 100%; }
+    .drawer-task-item {
+      background: white; border: 1px solid var(--border-color); border-radius: var(--radius-sm);
+      padding: 12px; margin-bottom: 8px;  box-shadow: var(--shadow-sm);
+    }
+    .drawer-task-item:active { cursor: grabbing; box-shadow: var(--shadow-md); }
+    
+    /* Timetable UI (Absolute Position, 15 min intervals) */
+    .timetable-relative-container { position: relative; min-height: 100%; user-select: none; }
+    .timetable-slots-bg { position: relative; z-index: 1; }
+    .time-slot {
+      display: flex; height: 30px; border-bottom: 1px dashed #E2E8F0; box-sizing: border-box;
+    }
+    .time-slot.hour-mark { border-bottom: 1px solid #CBD5E1; }
+    .time-label {
+      width: 50px; padding: 2px 4px; text-align: right; color: var(--text-secondary);
+      font-size: 0.7rem; font-weight: 600; border-right: 1px solid #E2E8F0; background:#F8FAFC;
+    }
+    .time-drop-area {
+      flex: 1; background: white; transition: background 0.2s;
+    }
+    .time-drop-area.drag-over { background: #F0F9FF; }
+    
+    .timetable-absolute-tasks { position: absolute; top: 0; left: 51px; right: 0; bottom: 0; z-index: 2; pointer-events: none; }
+    
+    .absolute-task {
+      position: absolute; left: 4px; right: 4px;
+      background: #E0F2FE; border: 1px solid #38BDF8; color: #0C4A6E;
+      border-radius: 4px; font-size: 0.75rem; font-weight: 600;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05); pointer-events: auto;
+      display: flex; flex-direction: column; overflow: hidden;
+    }
+    .absolute-task .task-content { flex: 1; padding: 2px 6px; display: flex; align-items: flex-start; justify-content: space-between; gap: 4px; overflow: hidden; }
+    .absolute-task input[type="text"] { background: transparent; border: none; outline: none; color: inherit; font-weight: inherit; font-size: inherit; width: 100%; height: 100%; }
+    .absolute-task .task-controls { display: flex; gap: 6px; align-items: flex-start; margin-top:2px; }
+    .absolute-task input[type="checkbox"] { cursor: pointer; }
+    .absolute-task .resize-handle {
+      height: 6px; background: #BAE6FD; cursor: ns-resize; width: 100%;
+      border-top: 1px solid #7DD3FC; position: absolute; bottom: 0; left: 0; z-index: 3;
+    }
+    
+    .drag-selection {
+      position: absolute; left: 51px; right: 0; background: rgba(56, 189, 248, 0.2); border: 1px dashed #0284C7; pointer-events: none; z-index: 3;
+    }
+    
+    /* Calendar Number Line UI */
+    .calendar-layout { position: relative; display: flex; height: calc(100vh - 140px); overflow: hidden; background: white; border-radius: var(--radius-lg); box-shadow: var(--shadow-sm); border: 1px solid var(--border-color); }
+    .calendar-timeline { flex: 1; padding: 20px 40px; overflow-y: auto; position: relative; }
+    .timeline-node { display: flex; align-items: flex-start; margin-bottom: 40px; position: relative; }
+    .timeline-node::before { content: ''; position: absolute; left: 20px; top: 30px; bottom: -40px; width: 2px; background: #E2E8F0; }
+    .timeline-node:last-child::before { display: none; }
+    .timeline-date { width: 120px; flex-shrink: 0; display: flex; align-items: center; gap: 12px; cursor: pointer; }
+    .timeline-dot { width: 16px; height: 16px; border-radius: 50%; background: var(--brand-primary); border: 3px solid white; box-shadow: 0 0 0 1px var(--brand-primary); z-index: 1; transition: transform 0.2s; }
+    .timeline-date:hover .timeline-dot { transform: scale(1.2); }
+    .timeline-date-text { font-weight: 700; font-size: 1.1rem; color: var(--text-primary); transition: color 0.2s; }
+    .timeline-date:hover .timeline-date-text { color: var(--brand-primary); }
+    .timeline-tasks { flex: 1; padding-top: -5px; display: flex; flex-direction: column; gap: 8px; }
+    .timeline-task-card { background: white; border: 1px solid var(--border-color); border-radius: var(--radius-sm); padding: 8px 12px; box-shadow: var(--shadow-sm); display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; }
+    .timeline-task-card.personal { border-left: 3px solid #8B5CF6; }
+    .timeline-task-card.business { border-left: 3px solid var(--brand-primary); }
+    
+    /* Pop-out Timetable */
+    .calendar-timetable-popout { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: white; box-shadow: 10px 0 20px rgba(0,0,0,0.05); display: flex; flex-direction: column; transform: translateX(-100%); opacity: 0; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s; z-index: 10; }
+    .calendar-timetable-popout.active { transform: translateX(0); opacity: 1; }
+    .popout-header { padding: 12px 20px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: #F8FAFC; }
+    .compact-timetable-wrapper { flex: 1; overflow-y: auto; background: #F8FAFC; }
+  </style>
+</head>
+<body>
+
+
+  <!-- APP HEADER -->
+  <header class="app-header">
+    <div class="header-container">
+      <div class="brand-logo">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+        </svg>
+        <span>Tend Portal</span>
+      </div>
+
+      <nav class="nav-tabs">
+        <button class="nav-tab-btn active" onclick="switchNav('top-section', this)">
+          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 00-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 00-1 1m-6 0h6"></path></svg>
+          トップページ
+        </button>
+        <button class="nav-tab-btn" onclick="switchNav('dept-section', this)">
+          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5m0 0h5m-5 0V11m0 0h5m-5 0H7"></path></svg>
+          所属事業部ポータル
+        </button>
+        <button class="nav-tab-btn" id="nav-members-tab" style="display: none;" onclick="switchNav('members-section', this)">
+          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
+          メンバー管理
+        </button>
+      </nav>
+
+      <div class="user-profile" style="display: flex; align-items: center; gap: 10px;">
+        <select id="user-role-select" class="form-select" style="padding: 4px 8px; font-size: 0.9rem;" onchange="changeUserRole()">
+          <option value="manager">上司（管理者）</option>
+          <option value="student_yamada">学生インターン（山田 太郎）</option>
+          <option value="student_suzuki">学生インターン（鈴木 花子）</option>
+        </select>
+        <div class="avatar" id="header-avatar">M</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- MAIN CONTAINER -->
+  <main class="main-container">
+
+    <!-- SECTION 1: TOP PAGE -->
+    <section id="top-section" class="view-section active">
+      <div class="section-header">
+        <div>
+          <h1 class="section-title">全社ポータル＆タスク承認状況</h1>
+          <p class="section-subtitle">企業のミッション・全社戦略の閲覧と、全事業部の承認申請タスク一覧</p>
+        </div>
+      </div>
+
+      <div class="grid-3-cards">
+        <div class="portal-card" onclick="alert('【企業ミッション・カルチャー】\n・ミッション：データと実行力で事業の進化を加速させる\n・カルチャー：自走型インターンシップ、透明性の高い評価、迅速な意思決定')">
+          <div class="card-icon">
+            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C20.832 18.477 19.246 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"></path></svg>
+          </div>
+          <div class="card-title">ミッション・カルチャー</div>
+          <div class="card-desc">Tendが掲げる存在意義・行動指針および組織カルチャーを閲覧できます。</div>
+          <div class="card-footer-link">閲覧する &rarr;</div>
+        </div>
+
+        <div class="portal-card" onclick="alert('【全社事業戦略・計画】\n・2026年度 Q3重点施策：新規顧客獲得数の200%達成\n・組織目標：インターン育成プロセスの体系化と自動化')">
+          <div class="card-icon">
+            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+          </div>
+          <div class="card-title">全社事業戦略・計画</div>
+          <div class="card-desc">全社的な今期のロードマップ・事業成長のロードマップを確認できます。</div>
+          <div class="card-footer-link">閲覧する &rarr;</div>
+        </div>
+
+        <div class="portal-card" onclick="switchNav('dept-section', document.querySelectorAll('.nav-tab-btn')[1])">
+          <div class="card-icon">
+            <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path></svg>
+          </div>
+          <div class="card-title">所属事業部の目標・計画</div>
+          <div class="card-desc">所属している事業部の目標とタスクツリーへ移動します。</div>
+          <div class="card-footer-link">事業部ページへ &rarr;</div>
+        </div>
+      </div>
+
+      <div class="section-header" style="margin-bottom: 16px;">
+        <h2 style="font-size: 1.25rem; font-weight: 700;">全事業部タスク・承認申請キュー</h2>
+        <div style="font-size: 0.85rem; color: var(--text-secondary);">
+          ※ 「提出（承認申請）」されたタスクは上位に優先表示されます
+        </div>
+      </div>
+
+      <div class="table-card">
+        <table class="custom-table">
+          <thead>
+            <tr>
+              <th>事業部</th>
+              <th>タスク名</th>
+              <th>担当者</th>
+              <th>進捗ステータス</th>
+              <th>進捗率</th>
+              <th>区分</th>
+              <th>操作</th>
+            </tr>
+          </thead>
+          <tbody id="top-task-tbody">
+            <!-- Dynamically Rendered -->
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- SECTION 2: DEPARTMENT PAGE -->
+    <section id="dept-section" class="view-section">
+      
+      <div class="dept-selector-bar" style="display: none;">
+      <!-- Dynamically populated by initDeptTabs -->
+    </div>
+
+
+      <div class="view-mode-bar">
+        <div class="view-mode-tabs">
+          <button class="view-mode-btn active" onclick="switchDeptView('tree-view', this)">
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 10-3 0M17 11.5V14m0-2.5v-6a1.5 1.5 0 113 0m-3 6a1.5 1.5 0 10-3 0M12 7.5V14m0-6.5a1.5 1.5 0 113 0m-3 0a1.5 1.5 0 10-3 0"></path></svg>
+            タスクツリーモード (親子連動ドラッグ)
+          </button>
+          <button class="view-mode-btn" onclick="switchDeptView('calendar-view', this)">
+            <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+            タスクカレンダー
+          </button>
+        </div>
+
+        <button class="action-btn-primary" onclick="openAddTaskModal()">
+          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
+          新規付箋タスクを追加
+        </button>
+      </div>
+
+      <!-- VIEW 1: INTERACTIVE WHITEBOARD VIEWPORT -->
+      <div id="tree-view" class="dept-subview active">
+
+        <div class="whiteboard-viewport" id="wb-viewport" ondragover="event.preventDefault();" ondrop="dropTaskToTree(event)">
+          
+
+          <!-- Transform Canvas Layer -->
+          <div class="whiteboard-canvas-layer" id="wb-canvas-layer">
+            <!-- Infinite SVG Line Layer -->
+            <svg class="wb-svg-layer" id="wb-svg-layer"></svg>
+
+            <!-- Root Goal Node (Center Bottom Origin) -->
+            <div class="wb-root-node" id="wb-root-node">
+              <span style="font-size:0.75rem; color:#64748B; display:block; font-weight:700;">【事業部目標起点】</span>
+              <div class="wb-root-label" id="wb-root-text">
+                目標：新規顧客獲得数の前月比200%達成
+              </div>
+            </div>
+
+            <!-- Dynamic Marker Nodes & Sticky Note Nodes container -->
+            <div id="wb-nodes-container"></div>
+          </div>
+        </div>
+      </div>
+
+
+
+      <!-- VIEW 3: TASK CALENDAR (NUMBER LINE) -->
+      <div id="calendar-view" class="dept-subview" style="display: none;">
+        <div class="calendar-layout">
+          <!-- Number line timeline -->
+          <div class="calendar-timeline" id="calendar-timeline">
+            <!-- Timeline nodes generated by JS -->
+          </div>
+          
+          <!-- Pop-out Timetable (Hidden by default) -->
+          <div class="calendar-timetable-popout" id="calendar-timetable-popout">
+            <div class="popout-header">
+              <h3 id="popout-date-title">YYYY/MM/DDのタイムテーブル</h3>
+              <button class="modal-close-btn" style="position: static;" onclick="closeTimetablePopout()">&times;</button>
+            </div>
+            
+            <div class="compact-timetable-wrapper" id="timetable-scroll-wrapper">
+              <div class="timetable-relative-container" id="timetable-relative-container">
+                <div id="timetable-slots-bg" class="timetable-slots-bg">
+                  <!-- Timetable grid generated by JS -->
+                </div>
+                <div id="timetable-absolute-tasks" class="timetable-absolute-tasks">
+                  <!-- Absolute positioned tasks -->
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- DRAWER UI -->
+    <!-- DRAWER UI -->
+    <div class="drawer-container" id="task-drawer">
+      <div class="drawer-header" style="display:flex; justify-content:space-between; align-items:center; padding:16px 20px; border-bottom:1px solid var(--border-color);">
+        <h3 style="font-weight:700;">タスク一覧</h3>
+        <button class="action-btn-primary" id="drawer-expand-btn" style="padding: 4px 8px; font-size: 0.8rem;" onclick="toggleDrawerExpand()">全画面展開</button>
+      </div>
+      <div class="drawer-body" style="padding:20px; flex:1; overflow-y:auto; background:#F8FAFC;">
+        <button class="action-btn-primary" style="width:100%; justify-content:center; margin-bottom:20px;" onclick="openAddTaskModal()">+ 新規タスク追加</button>
+        <div class="drawer-task-list-container">
+          <div style="margin-bottom:12px; font-weight:600; font-size:0.9rem;">未アサイン / バックログ</div>
+          <div id="drawer-task-list" class="drawer-task-list" style="min-height:200px; padding-bottom:40px;">
+            <!-- Dynamically Populated Draggable Tasks -->
+          </div>
+        </div>
+        
+        <div class="drawer-table-view">
+          <div class="table-card" style="margin: 0; box-shadow: none;">
+            <table class="custom-table" style="width: 100%;">
+              <thead>
+                <tr>
+                  <th>重点施策</th>
+                  <th>達成項目（タスク名）</th>
+                  <th>担当</th>
+                  <th>進捗状況</th>
+                  <th>進捗率</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="dept-task-tbody">
+                <!-- Dynamically populated by renderDeptListView -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+    <!-- SECTION: MEMBERS (Admin Only) -->
+    <section id="members-section" class="view-section">
+      <div class="section-header" style="margin-bottom: 20px;">
+        <div>
+          <h1 class="section-title">メンバー管理</h1>
+          <p class="section-subtitle">ユーザー情報の登録・削除と権限の管理（管理者専用）</p>
+        </div>
+      </div>
+
+      <div style="display: flex; gap: 20px; align-items: flex-start;">
+        <!-- Left Pane: List (60%) -->
+        <div class="table-card" style="flex: 6; margin-bottom: 0;">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>名前</th>
+                <th>ログインID</th>
+                <th>権限</th>
+                <th>所属事業部</th>
+                <th style="width: 140px;">操作</th>
+              </tr>
+            </thead>
+            <tbody id="members-table-body">
+              <!-- Rendered via JS -->
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Right Pane: Form (40%) -->
+        <div class="table-card" style="flex: 4; margin-bottom: 0; padding: 20px;">
+          <h3 class="modal-title" style="margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">メンバー追加・編集</h3>
+          
+          <input type="hidden" id="form-user-id" value="">
+
+          <div class="form-group">
+            <label class="form-label">名前</label>
+            <input type="text" id="form-member-name" class="form-input" placeholder="例: 佐藤 次郎">
+          </div>
+          <div class="form-group">
+            <label class="form-label">ログインID</label>
+            <input type="text" id="form-member-login-id" class="form-input" placeholder="例: sato_jiro (半角英数字)">
+          </div>
+          <div class="form-group">
+            <label class="form-label">権限</label>
+            <select id="form-member-role" class="form-select">
+              <option value="student">学生インターン</option>
+              <option value="manager">上司（管理者）</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label class="form-label">所属事業部</label>
+            <select id="form-member-dept" class="form-select">
+              <!-- Dynamically populated -->
+            </select>
+          </div>
+
+          <div style="display: flex; gap: 10px; margin-top: 24px;">
+            <button type="button" class="view-mode-btn" style="flex: 1;" onclick="clearMemberForm()">クリア</button>
+            <button type="button" id="btn-save-member" class="action-btn-primary" style="flex: 2;" onclick="saveMember()">登録する</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  
+  <!-- SPLIT MODAL -->
+  <div class="modal-overlay" id="split-modal">
+    <div class="modal-card" style="max-width: 800px; display: flex; flex-direction: column;">
+      <button class="modal-close-btn" onclick="closeModal('split-modal')">&times;</button>
+      <h3 class="modal-title">タスクの分解（分割）</h3>
+      
+      <div style="display: flex; gap: 20px; flex: 1;">
+        <div style="flex: 1; border-right: 1px solid #E2E8F0; padding-right: 20px;">
+          <h4 style="font-size: 0.9rem; color: #64748B; margin-bottom: 8px;">元のタスク</h4>
+          <div id="split-original-task-title" style="padding: 12px; background: #F8FAFC; border-radius: 6px; font-weight: bold; margin-bottom: 10px; font-size: 0.9rem; line-height: 1.4;"></div>
+          <input type="hidden" id="split-original-task-id">
+        </div>
+        
+        <div style="flex: 1.5; overflow-y: auto; max-height: 60vh; padding-right: 10px;">
+          <h4 style="font-size: 0.9rem; color: #64748B; margin-bottom: 8px;">分解後のタスク</h4>
+          <div id="split-new-tasks-container">
+            <!-- Dynamically added forms -->
+          </div>
+          <button type="button" class="action-btn-primary" style="background: white; color: var(--brand-accent); border: 1px dashed var(--brand-accent); margin-bottom: 20px; width: 100%; justify-content: center;" onclick="addSplitTaskForm()">＋ タスクを追加</button>
+          
+          <div style="text-align: right;">
+            <button type="button" class="view-mode-btn" onclick="closeModal('split-modal')" style="margin-right: 10px;">キャンセル</button>
+            <button type="button" class="action-btn-primary" onclick="executeSplitTask()">分解して更新</button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- TASK MODAL -->
+  <div class="modal-overlay" id="task-modal">
+    <div class="modal-card">
+      <button class="modal-close-btn" onclick="closeModal('task-modal')">&times;</button>
+      <h3 class="modal-title" id="modal-heading">付箋タスクの編集・進捗更新</h3>
+
+      <input type="hidden" id="modal-task-id">
+
+      <div class="form-group" style="margin-bottom: 16px; display: flex; gap: 16px; align-items: center; background: #F1F5F9; padding: 10px; border-radius: 6px;">
+        <label class="form-label" style="margin-bottom: 0; font-weight: bold; color: var(--text-primary);">タスク区分</label>
+        <label style="cursor:pointer; display:flex; align-items:center; gap:4px;">
+          <input type="radio" name="modal-task-type" value="business" checked onchange="toggleTaskTypeInputs()"> 業務タスク
+        </label>
+        <label style="cursor:pointer; display:flex; align-items:center; gap:4px;">
+          <input type="radio" name="modal-task-type" value="personal" onchange="toggleTaskTypeInputs()"> 個人タスク
+        </label>
+      </div>
+
+      <div class="form-group" id="group-task-initiative">
+        <label class="form-label">所属する重点施策</label>
+        <input type="text" id="modal-task-initiative" class="form-input" placeholder="例: 新規顧客獲得">
+      </div>
+
+
+      <div class="form-group">
+        <label class="form-label">タスク名（達成項目）</label>
+        <input type="text" id="modal-task-title" class="form-input" placeholder="例: リード顧客リストの精査">
+      </div>
+
+      <div class="form-group" id="group-task-approval">
+        <label class="form-label">承認設定</label>
+        <div style="display: flex; gap: 16px;">
+          <label style="cursor:pointer; display:flex; align-items:center; gap:4px;">
+            <input type="radio" name="modal-task-approval" value="true" checked onchange="handleSliderInput(document.getElementById('modal-task-progress-range').value)"> 承認が必要
+          </label>
+          <label style="cursor:pointer; display:flex; align-items:center; gap:4px;">
+            <input type="radio" name="modal-task-approval" value="false" onchange="handleSliderInput(document.getElementById('modal-task-progress-range').value)"> 承認は不要
+          </label>
+        </div>
+      </div>
+
+      <div class="form-group" id="group-task-assignee">
+        <label class="form-label">担当者</label>
+        <select id="modal-task-assignee" class="form-select"></select>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label">進捗状況</label>
+        <div class="custom-slider-container" style="position: relative; padding: 16px 10px 48px; margin-top: 10px;">
+          <input type="range" id="modal-task-progress-range" min="0" max="100" class="form-input" style="width: 100%; position: relative; z-index: 5; background: transparent; padding: 0;" oninput="handleSliderInput(this.value)">
+          <div id="slider-ticks" style="position: absolute; top: 22px; left: 10px; right: 10px; height: 20px; pointer-events: none; z-index: 1;">
+            <div class="slider-tick" style="left: 0%;"><span>未着手<br>0%</span></div>
+            <div class="slider-tick" style="left: 10%;"><span>着手<br>10%</span></div>
+            <div class="slider-tick" style="left: 60%;"><span>6割<br>60%</span></div>
+            <div class="slider-tick" id="tick-85" style="left: 85%;"><span>提出<br>85%</span></div>
+            <div class="slider-tick" style="left: 100%;"><span>完了<br>100%</span></div>
+          </div>
+        </div>
+        <div style="text-align: right; font-size: 0.85rem; color: var(--text-secondary);">
+          内部ステータス: <strong id="modal-status-text" style="color: var(--brand-accent);">未着手</strong> / 現在値: <strong id="range-val-display" style="color: var(--brand-accent);">0%</strong>
+          <input type="hidden" id="modal-internal-status" value="unstarted">
+        </div>
+      </div>
+
+      <div class="form-group" id="group-task-routine">
+        <label class="form-label">ルーティン設定</label>
+        <select id="modal-task-routine-type" class="form-select" onchange="toggleRoutineInputs()">
+          <option value="none">なし（ワンショット）</option>
+          <option value="daily">毎日</option>
+          <option value="weekly">毎週</option>
+        </select>
+        
+        <div id="routine-inputs" style="display: none; margin-top: 12px; padding: 12px; background: #F8FAFC; border-radius: 6px; border: 1px solid #E2E8F0;">
+          <div id="routine-day-group" style="display: none; margin-bottom: 12px;">
+            <label style="font-size: 0.8rem; display: block; margin-bottom: 4px;">復活する曜日</label>
+            <select id="modal-task-routine-day" class="form-select">
+              <option value="Monday">月曜日</option>
+              <option value="Tuesday">火曜日</option>
+              <option value="Wednesday">水曜日</option>
+              <option value="Thursday">木曜日</option>
+              <option value="Friday">金曜日</option>
+              <option value="Saturday">土曜日</option>
+              <option value="Sunday">日曜日</option>
+            </select>
+          </div>
+          <div>
+            <label style="font-size: 0.8rem; display: block; margin-bottom: 4px;">復活する時刻</label>
+            <input type="time" id="modal-task-routine-time" class="form-input" value="05:00">
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-actions">
+        <button type="button" class="btn-danger-outline" onclick="deleteCurrentTask()">タスクを削除</button>
+        <div style="display: flex; gap: 10px;">
+          <button type="button" class="view-mode-btn" onclick="closeModal('task-modal')">キャンセル</button>
+          <button type="button" class="action-btn-primary" onclick="saveTaskModal()">保存する</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Supabase Init (safe - will fallback gracefully if not configured)
+    const SUPABASE_URL = 'https://mioqxukbqxsftxodavoc.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1pb3F4dWticXhzZnR4b2Rhdm9jIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODUyMDY5OTIsImV4cCI6MjEwMDc4Mjk5Mn0.6pTzq3KB8UNTv4kiwMvwaoA6kmrEy8KW-tOp6FGfP8U';
+    let sbClient = null;
+    try {
+      if (window.supabase && SUPABASE_URL !== 'YOUR_SUPABASE_URL') {
+        sbClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+      }
+    } catch(e) {
+      console.warn('Supabase init skipped:', e);
+    }
+    // Helper: safe supabase query (returns null if not connected)
+    async function sbQuery(fn) {
+      if (!sbClient) return { data: null, error: new Error('Supabase not configured') };
+      try { return await fn(); } catch(e) { return { data: null, error: e }; }
+    }
+
+    // Global State
+    let departments = [];
+    let users = [];
+    let currentUserId = null;
+    let currentUserRole = 'manager'; // Default role as manager
+    let currentUserName = '上司';
+
+    
+    function initAssigneeSelect() {
+      const select = document.getElementById('modal-task-assignee');
+      if(!select) return;
+      select.innerHTML = '';
+      users.forEach(u => {
+        const opt = document.createElement('option');
+        opt.value = u.id;
+        opt.innerText = u.name;
+        select.appendChild(opt);
+      });
+    }
+
+    function initUserSelect() {
+      const select = document.getElementById('user-role-select');
+      if(!select) return;
+      select.innerHTML = '';
+      users.forEach(u => {
+        const opt = document.createElement('option');
+        opt.value = u.id;
+        opt.innerText = `${u.role === 'manager' ? '管理者' : '学生'} (${u.name})`;
+        select.appendChild(opt);
+      });
+      initAssigneeSelect();
+      if(users.length > 0) {
+        select.value = users[0].id;
+        changeUserRole();
+      }
+    }
+
+    function changeUserRole() {
+      const val = document.getElementById('user-role-select').value;
+      const avatarEl = document.getElementById('header-avatar');
+      const user = users.find(u => u.id === val);
+      if(user) {
+        currentUserId = user.id;
+        currentUserRole = user.role;
+        currentUserName = user.name;
+        avatarEl.innerText = user.name.charAt(0);
+        
+        const memberTab = document.getElementById('nav-members-tab');
+        if (memberTab) {
+          memberTab.style.display = (currentUserRole === 'manager') ? 'inline-flex' : 'none';
+        }
+      }
+      renderAllViews();
+    }
+    let currentDept = null;
+    let currentStatusFilterInModal = 'in-progress';
+
+    // Viewport Zoom & Pan
+    let zoomScale = 0.5;
+    let panX = 0;
+    let panY = 0;
+    let isPanning = false;
+    let startPanX = 0;
+    let startPanY = 0;
+
+    // Drag State (Single & Parent-Child Descendant Dragging)
+    let dragType = null; // 'task' or 'marker'
+    let dragNodeId = null;
+    let dragMarkerInit = null;
+    let mouseStartX = 0;
+    let mouseStartY = 0;
+    
+    let initialDraggedPos = { x: 0, y: 0 };
+    let initialDescendantPositions = {}; // childId -> {x, y}
+
+    // Initiative Positions State (Draggable Marker Headers)
+    let initiativePositions = [
+      { init: 'アタックリストの精度向上', x: 260, y: 170 },
+      { init: '商談化率の改善', x: 700, y: 170 },
+      { init: 'インターン教育フロー確立', x: 1140, y: 170 }
+    ];
+
+    // Branching Tree Tasks Data Structure
+    let tasks = [];
+
+    const statusMap = {
+      'unstarted': { label: '未着手', class: 'unstarted', color: '#94A3B8' },
+      'in-progress': { label: '着手', class: 'in-progress', color: '#3B82F6' },
+      'sixty': { label: '6割完了', class: 'sixty', color: '#8B5CF6' },
+      'submitted': { label: '提出 (承認待)', class: 'submitted', color: '#F59E0B' },
+      'completed': { label: '完了', class: 'completed', color: '#10B981' }
+    };
+
+    document.addEventListener('DOMContentLoaded', async () => {
+      initWhiteboardViewport();
+      
+      try {
+                const { data: dData, error: dErr } = await sbQuery(() => sbClient.from('departments').select('*'));
+    if (!dErr && dData && dData.length > 0) departments = dData;
+    
+    const { data: uData, error: uErr } = await sbQuery(() => sbClient.from('users').select('*'));
+    if (!uErr && uData && uData.length > 0) users = uData;
+    
+    const { data: tData, error: tErr } = await sbQuery(() => sbClient.from('tasks').select('*'));
+        if (!tErr && tData && tData.length > 0) tasks = tData;
+
+        const { data: sData, error: sErr } = await sbQuery(() => sbClient.from('scheduled_tasks').select('*'));
+        if (!sErr && sData) {
+          sData.forEach(st => {
+            if (!window.scheduledTasks[st.date]) window.scheduledTasks[st.date] = [];
+            window.scheduledTasks[st.date].push(st);
+          });
+        }
+      } catch (e) {
+        console.error('Supabase init load error:', e);
+      }
+      
+      // Always load mock data if no tasks fetched
+      if (tasks.length === 0) {
+        tasks = [
+          { id: 'mock-1', department_id: '11111111-1111-1111-1111-111111111111', initiative: 'アタックリストの精度向上', title: 'ターゲット企業50社のリストアップ', assignee_id: '66666666-6666-6666-6666-666666666666', status: 'completed', progress: 100, stickyColor: 'sticky-yellow', isRoutine: false, isToday: true, priority: 'high', x: 320, y: 280, parentId: null },
+          { id: 'mock-2', department_id: '11111111-1111-1111-1111-111111111111', initiative: 'アタックリストの精度向上', title: '業界データベース自動抽出ツールの検証', assignee_id: '77777777-7777-7777-7777-777777777777', status: 'in-progress', progress: 40, stickyColor: 'sticky-blue', isRoutine: false, isToday: false, priority: 'mid', x: 320, y: 490, parentId: 'mock-1' },
+          { id: 'mock-3', department_id: '11111111-1111-1111-1111-111111111111', initiative: '商談化率の改善', title: '提案用スライド資料のテンプレート改訂', assignee_id: '77777777-7777-7777-7777-777777777777', status: 'sixty', progress: 60, stickyColor: 'sticky-purple', isRoutine: false, isToday: true, priority: 'mid', x: 700, y: 280, parentId: null },
+          { id: 'mock-4', department_id: '11111111-1111-1111-1111-111111111111', initiative: '商談化率の改善', title: 'ヒアリングシートのフォーマット標準化', assignee: '佐藤 健', status: 'in-progress', progress: 30, stickyColor: 'sticky-blue', isRoutine: false, isToday: false, priority: 'mid', x: 700, y: 490, parentId: 'mock-3' },
+          { id: 'mock-5', department_id: '11111111-1111-1111-1111-111111111111', initiative: 'インターン教育フロー確立', title: '週次振り返りミーティング用テンプレート作成', assignee_id: '66666666-6666-6666-6666-666666666666', status: 'unstarted', progress: 0, stickyColor: 'sticky-yellow', isRoutine: true, isToday: false, priority: 'low', x: 1140, y: 280, parentId: null },
+          { id: 'mock-6', department_id: '33333333-3333-3333-3333-333333333333', initiative: 'SNSリード獲得キャンペーン', title: 'X/LinkedIn投稿クリエイティブの制作', assignee: '高橋 涼', status: 'submitted', progress: 90, stickyColor: 'sticky-yellow', isRoutine: false, isToday: true, priority: 'high', x: 700, y: 280, parentId: null }
+        ];
+      }
+      
+          if (departments.length === 0) {
+      departments = [
+        { id: '11111111-1111-1111-1111-111111111111', name: '営業事業部' },
+        { id: '22222222-2222-2222-2222-222222222222', name: '開発事業部' },
+        { id: '33333333-3333-3333-3333-333333333333', name: 'マーケティング事業部' },
+        { id: '44444444-4444-4444-4444-444444444444', name: '全事業部' }
+      ];
+    }
+
+    if (users.length === 0) {
+      users = [
+        { id: '55555555-5555-5555-5555-555555555555', login_id: 'manager1', name: '上司', role: 'manager', department_id: '44444444-4444-4444-4444-444444444444' },
+        { id: '66666666-6666-6666-6666-666666666666', login_id: 'yamada', name: '山田 太郎', role: 'student', department_id: '11111111-1111-1111-1111-111111111111' },
+        { id: '77777777-7777-7777-7777-777777777777', login_id: 'suzuki', name: '鈴木 花子', role: 'student', department_id: '22222222-2222-2222-2222-222222222222' }
+      ];
+    }
+
+        if (departments.length > 0 && !currentDept) {
+      currentDept = departments[0].id;
+    }
+    initDeptTabs();
+    initDeptSelect();
+    initUserSelect();
+    initAssigneeSelect();
+    renderAllViews();
+    autoLayoutNodes();
+      updateTransform();
+    });
+
+    function initWhiteboardViewport() {
+      const viewport = document.getElementById('wb-viewport');
+      if (!viewport) return;
+
+      // Center the view at X=700 when the page loads
+      // Use window.innerWidth because viewport.clientWidth is 0 if the section is hidden on load
+      const vWidth = viewport.clientWidth || (window.innerWidth - 320); // 320 for drawer width
+      panX = (vWidth / 2) - (700 * zoomScale);
+      panY = 40; // Small top padding
+
+      
+
+      
+
+      window.addEventListener('mousemove', (e) => {
+        if (dragType === 'task' && dragNodeId) {
+          // Parent-Child Group Dragging Logic for Sticky Notes
+          const deltaX = (e.clientX - mouseStartX) / zoomScale;
+          const deltaY = (e.clientY - mouseStartY) / zoomScale;
+
+          const mainTask = tasks.find(t => t.id === dragNodeId);
+          if (mainTask) {
+            mainTask.x = Math.round(initialDraggedPos.x + deltaX);
+            mainTask.y = Math.round(initialDraggedPos.y + deltaY);
+
+            const el = document.getElementById(`sticky-node-${mainTask.id}`);
+            if (el) {
+              el.style.left = mainTask.x + 'px';
+              el.style.top = mainTask.y + 'px';
+            }
+
+            // Also move all descendant child tasks simultaneously by deltaX/deltaY
+            Object.keys(initialDescendantPositions).forEach(childId => {
+              const cId = childId;
+              const childTask = tasks.find(t => t.id === cId);
+              const initPos = initialDescendantPositions[cId];
+
+              if (childTask && initPos) {
+                childTask.x = Math.round(initPos.x + deltaX);
+                childTask.y = Math.round(initPos.y + deltaY);
+
+                const cEl = document.getElementById(`sticky-node-${cId}`);
+                if (cEl) {
+                  cEl.style.left = childTask.x + 'px';
+                  cEl.style.top = childTask.y + 'px';
+                }
+              }
+            });
+
+            drawSvgBranchLines();
+          }
+        } else if (dragType === 'marker' && dragMarkerInit) {
+          // Parent-Child Group Dragging Logic for Initiative Marker Header
+          const deltaX = (e.clientX - mouseStartX) / zoomScale;
+          const deltaY = (e.clientY - mouseStartY) / zoomScale;
+
+          const mPos = initiativePositions.find(m => m.init === dragMarkerInit);
+          if (mPos) {
+            mPos.x = Math.round(initialDraggedPos.x + deltaX);
+            mPos.y = Math.round(initialDraggedPos.y + deltaY);
+
+            const mEl = document.querySelector(`.wb-marker-node[data-init="${CSS.escape(dragMarkerInit)}"]`);
+            if (mEl) {
+              mEl.style.left = mPos.x + 'px';
+              mEl.style.top = mPos.y + 'px';
+            }
+
+            // Move all descendant tasks under this initiative
+            Object.keys(initialDescendantPositions).forEach(tId => {
+              const taskId = tId;
+              const task = tasks.find(t => t.id === taskId);
+              const initPos = initialDescendantPositions[taskId];
+
+              if (task && initPos) {
+                task.x = Math.round(initPos.x + deltaX);
+                task.y = Math.round(initPos.y + deltaY);
+
+                const tEl = document.getElementById(`sticky-node-${taskId}`);
+                if (tEl) {
+                  tEl.style.left = task.x + 'px';
+                  tEl.style.top = task.y + 'px';
+                }
+              }
+            });
+
+            drawSvgBranchLines();
+          }
+        }
+      });
+
+      window.addEventListener('mouseup', () => {
+        if (isPanning) {
+          isPanning = false;
+          viewport.style.cursor = 'grab';
+        }
+        if (dragType) {
+          if (dragType === 'task' && dragNodeId) {
+            const mt = tasks.find(t => t.id === dragNodeId);
+            if (mt) if(sbClient) if(sbClient) sbClient.from('tasks').update({x: mt.x, y: mt.y}).eq('id', mt.id).catch(console.error);
+            Object.keys(initialDescendantPositions).forEach(cId => {
+              const child = tasks.find(t => t.id === cId);
+              if (child) if(sbClient) if(sbClient) sbClient.from('tasks').update({x: child.x, y: child.y}).eq('id', child.id).catch(console.error);
+            });
+          } else if (dragType === 'marker' && dragMarkerInit) {
+            Object.keys(initialDescendantPositions).forEach(tId => {
+              const child = tasks.find(t => t.id === tId);
+              if (child) if(sbClient) if(sbClient) sbClient.from('tasks').update({x: child.x, y: child.y}).eq('id', child.id).catch(console.error);
+            });
+          }
+          dragType = null;
+          dragNodeId = null;
+          dragMarkerInit = null;
+        }
+      });
+    }
+
+    // Helper: Recursively find all descendant task IDs under a given task
+    function getDescendantTaskIds(parentId) {
+      let result = [];
+      const children = getVisibleTasks('default').filter(t => t.parentId === parentId && t.department_id === currentDept);
+      children.forEach(c => {
+        result.push(c.id);
+        result = result.concat(getDescendantTaskIds(c.id));
+      });
+      return result;
+    }
+
+    function updateTransform() { 
+      const layer = document.getElementById('wb-canvas-layer');
+      if (layer) {
+        layer.style.transform = `translate(${panX}px, ${panY}px) scale(${zoomScale})`;
+      }
+      const zText = document.getElementById('zoom-text');
+      if(zText) zText.innerText = `${Math.round(zoomScale * 100)}%`;
+    }
+
+    function zoomIn() {
+      zoomScale = Math.min(2.2, zoomScale + 0.08);
+      updateTransform();
+    }
+
+    function zoomOut() {
+      zoomScale = Math.max(0.4, zoomScale - 0.08);
+      updateTransform();
+    }
+
+    function resetZoomPan() {
+      zoomScale = 1.0;
+      panX = 0;
+      panY = 0;
+      updateTransform();
+      autoLayoutNodes();
+    }
+
+    // Multi-branching Auto-Arrange Tree Layout Algorithm
+    function autoLayoutNodes() {
+      const deptTasks = getVisibleTasks('whiteboard').filter(t => t.department_id === currentDept);
+      const initiatives = Array.from(new Set(deptTasks.map(t => t.initiative)));
+
+      if (initiatives.length === 0) return;
+
+      const totalCols = initiatives.length;
+      const colWidth = 460;
+      const startX = 700 - ((totalCols - 1) * colWidth) / 2;
+
+      initiatives.forEach((init, initIdx) => {
+        const posX = startX + initIdx * colWidth;
+
+        // Position Marker Data & DOM
+        let mPos = initiativePositions.find(m => m.init === init);
+        if (!mPos) {
+          mPos = { init: init, x: posX - 100, y: 170 };
+          initiativePositions.push(mPos);
+        } else {
+          mPos.x = posX - 100;
+          mPos.y = 170;
+        }
+
+        // Position Level 1 Tasks
+        const level1Tasks = deptTasks.filter(t => t.initiative === init && !t.parentId);
+        const l1Count = level1Tasks.length;
+        const l1Spacing = 260;
+
+        level1Tasks.forEach((t, tIdx) => {
+          const l1X = posX + (tIdx - (l1Count - 1) / 2) * l1Spacing - 120;
+          t.x = l1X;
+          t.y = 280;
+
+          // Branch Subtasks Layout
+          const children = deptTasks.filter(c => c.parentId === t.id);
+          const cCount = children.length;
+          const cSpacing = 260;
+
+          children.forEach((c, cIdx) => {
+            c.x = l1X + (cIdx - (cCount - 1) / 2) * cSpacing;
+            c.y = t.y + 210;
+          });
+        });
+      });
+
+      renderInteractiveWhiteboard();
+    }
+
+    
+    function getVisibleTasks(viewName) {
+      return tasks.filter(t => {
+        const isPersonal = (t.type === 'personal');
+        if (currentUserRole === 'manager') {
+          if (isPersonal) return false;
+          return true;
+        } else if (currentUserRole === 'student') {
+          if (t.assignee !== currentUserName) return false;
+          if (viewName === 'whiteboard' && isPersonal) return false;
+          return true;
+        }
+        return true;
+      });
+    }
+
+
+    // --- Member Management ---
+    function initDeptSelect() {
+      const select = document.getElementById('form-member-dept');
+      if(!select) return;
+      select.innerHTML = '';
+      departments.forEach(d => {
+        const opt = document.createElement('option');
+        opt.value = d.id;
+        opt.innerText = d.name;
+        select.appendChild(opt);
+      });
+    }
+
+    function renderMembersList() {
+      const tbody = document.getElementById('members-table-body');
+      if (!tbody) return;
+      tbody.innerHTML = '';
+      users.forEach(u => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td style="font-weight: 500;">${u.name}</td>
+          <td>${u.login_id || ''}</td>
+          <td>${u.role === 'manager' ? '<span class="status-badge" style="background:#DBEAFE; color:#1E40AF;">管理者</span>' : '<span class="status-badge" style="background:#FEF3C7; color:#92400E;">学生</span>'}</td>
+          <td>${departments.find(d => d.id === u.department_id)?.name || ''}</td>
+          <td style="display: flex; gap: 4px;">
+            <button class="view-mode-btn" style="padding: 4px 8px; font-size: 0.8rem; height: auto;" onclick="editMember('${u.id}')">編集</button>
+            <button class="btn-danger-outline" style="padding: 4px 8px; font-size: 0.8rem; height: auto;" onclick="deleteMember('${u.id}')">削除</button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function editMember(id) {
+      const user = users.find(u => u.id === id);
+      if(!user) return;
+      document.getElementById('form-user-id').value = user.id;
+      document.getElementById('form-member-name').value = user.name;
+      document.getElementById('form-member-login-id').value = user.login_id || '';
+      document.getElementById('form-member-role').value = user.role;
+      if(user.department_id) document.getElementById('form-member-dept').value = user.department_id;
+      document.getElementById('btn-save-member').innerText = '更新する';
+    }
+
+    function clearMemberForm() {
+      document.getElementById('form-user-id').value = '';
+      document.getElementById('form-member-name').value = '';
+      document.getElementById('form-member-login-id').value = '';
+      document.getElementById('form-member-role').value = 'student';
+      if(departments.length > 0) document.getElementById('form-member-dept').value = departments[0].name;
+      document.getElementById('btn-save-member').innerText = '登録する';
+    }
+
+    async function saveMember() {
+      const id = document.getElementById('form-user-id').value;
+      const name = document.getElementById('form-member-name').value;
+      const loginId = document.getElementById('form-member-login-id').value;
+      const role = document.getElementById('form-member-role').value;
+      const department_id = document.getElementById('form-member-dept').value;
+
+      if (!name || !loginId) {
+        alert('名前とログインIDは必須です');
+        return;
+      }
+
+      const payload = {
+        name: name,
+        login_id: loginId,
+        role: role,
+        department_id: department_id
+      };
+
+      try {
+        if (id) {
+          const { error } = await sbQuery(() => sbClient.from('users').update(payload).eq('id', id));
+          if (error) {
+            alert('メンバー更新に失敗しました。');
+            console.error(error);
+            return;
+          }
+          const userIdx = users.findIndex(u => u.id === id);
+          if(userIdx !== -1) {
+            users[userIdx] = { ...users[userIdx], ...payload };
+          }
+        } else {
+          const { data, error } = await sbQuery(() => sbClient.from('users').insert([payload]).select());
+          if (error) {
+            alert('メンバー追加に失敗しました。');
+            console.error(error);
+            return;
+          }
+          if (data && data.length > 0) {
+            users.push(data[0]);
+          }
+        }
+      } catch (err) {
+        console.error(err);
+      }
+
+      initUserSelect();
+      initAssigneeSelect();
+      renderMembersList();
+      clearMemberForm();
+    }
+
+    async function deleteMember(id) {
+      if (!confirm('このメンバーを削除しますか？')) return;
+
+      try {
+        const { error } = await sbQuery(() => sbClient.from('users').delete().eq('id', id));
+        if (error) {
+          alert('メンバー削除に失敗しました。');
+          console.error(error);
+          return;
+        }
+        users = users.filter(u => u.id !== id);
+      } catch (err) {
+        console.error(err);
+      }
+
+      if (document.getElementById('form-user-id').value === id) {
+        clearMemberForm();
+      }
+
+      initUserSelect();
+      initAssigneeSelect();
+      renderMembersList();
+    }
+
+    function renderAllViews() {
+      renderTopPageTable();
+      renderInteractiveWhiteboard();
+      renderDeptListView();
+      renderCalendar();
+      renderMembersList();
+      renderTimetable();
+      renderDrawerTasks();
+    }
+
+    function switchNav(sectionId, btn) {
+      document.querySelectorAll('.nav-tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.view-section').forEach(s => s.classList.remove('active'));
+      
+      btn.classList.add('active');
+      document.getElementById(sectionId).classList.add('active');
+
+      const drawer = document.getElementById('task-drawer');
+      const mainContainer = document.querySelector('.main-container');
+      
+      if (sectionId === 'top-section' || sectionId === 'members-section') {
+    if (drawer) drawer.classList.remove('visible');
+    if (mainContainer) mainContainer.classList.remove('with-drawer');
+    if (sectionId === 'top-section') renderTopPageTable();
+  } else {
+        if (drawer) drawer.classList.add('visible');
+        if (mainContainer) mainContainer.classList.add('with-drawer');
+        setTimeout(drawSvgBranchLines, 50);
+      }
+    }
+
+    
+    function initDeptTabs() {
+      const bar = document.querySelector('.dept-selector-bar');
+      if(!bar) return;
+      bar.innerHTML = '<span style="font-weight: 700; font-size: 0.85rem; color: var(--text-secondary); padding-left: 8px;">事業部切替:</span>';
+      departments.forEach(d => {
+        const btn = document.createElement('button');
+        btn.className = 'dept-btn' + (d.id === currentDept ? ' active' : '');
+        btn.innerText = d.name;
+        btn.onclick = function() { selectDepartment(d.id, this); };
+        bar.appendChild(btn);
+      });
+    }
+
+    function selectDepartment(departmentId, btn) {
+      currentDept = departmentId;
+      document.querySelectorAll('.dept-btn').forEach(b => b.classList.remove('active'));
+      if (btn) {
+        btn.classList.add('active');
+      } else {
+        const btns = document.querySelectorAll('.dept-btn');
+        const deptObj = departments.find(d => d.id === departmentId);
+        if (deptObj) {
+            btns.forEach(b => { if(b.innerText === deptObj.name) b.classList.add('active'); });
+        }
+      }
+      
+      const deptObj = departments.find(d => d.id === departmentId);
+      const deptName = deptObj ? deptObj.name : '';
+      const titleEl = document.getElementById('dept-goal-title');
+      if (titleEl) titleEl.innerText = titleMap[deptName] || `【${deptName}】の目標`;
+      const rootText = document.getElementById('wb-root-text');
+      if(rootText) rootText.innerText = `目標: ${titleMap[deptName] ? titleMap[deptName].replace(/[【】]/g, '') : deptName}`;
+      renderAllViews();
+      autoLayoutNodes();
+    }
+
+    function switchDeptView(subviewId, btn) {
+      document.querySelectorAll('.view-mode-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.dept-subview').forEach(v => v.style.display = 'none');
+
+      btn.classList.add('active');
+      document.getElementById(subviewId).style.display = 'block';
+
+      if (subviewId === 'tree-view') {
+        setTimeout(drawSvgBranchLines, 50);
+      }
+    }
+
+    let currentCalendarDate = new Date();
+    window.scheduledTasks = window.scheduledTasks || {};
+
+    function renderCalendar() {
+      const timeline = document.getElementById('calendar-timeline');
+      if (!timeline) return;
+      timeline.innerHTML = '';
+
+      const today = new Date();
+      for (let i = 0; i < 14; i++) {
+        const d = new Date(today);
+        d.setDate(today.getDate() + i);
+        const dateStr = `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`;
+        
+        const dayTasks = getVisibleTasks('calendar').filter(t => t.deadline === dateStr);
+
+        let taskHtml = '';
+        dayTasks.forEach(t => {
+          const typeClass = t.type === 'personal' ? 'personal' : 'business';
+          taskHtml += `
+            <div class="timeline-task-card ${typeClass}">
+              <span>${t.title}</span>
+              <span style="color:var(--text-secondary); font-size:0.75rem;">${t.type === 'personal' ? '👤 個人' : '🏢 業務'}</span>
+            </div>
+          `;
+        });
+
+        if (dayTasks.length === 0) {
+          taskHtml = `<div style="color:var(--text-secondary); font-size:0.85rem; padding: 8px;">締切が設定されたタスクはありません</div>`;
+        }
+
+        const node = document.createElement('div');
+        node.className = 'timeline-node';
+        node.innerHTML = `
+          <div class="timeline-date" onclick="openTimetablePopout('${dateStr}')">
+            <div class="timeline-dot"></div>
+            <div class="timeline-date-text">${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}</div>
+          </div>
+          <div class="timeline-tasks">
+            ${taskHtml}
+          </div>
+        `;
+        timeline.appendChild(node);
+      }
+    }
+
+    function openTimetablePopout(dateStr) {
+      document.getElementById('popout-date-title').innerText = `${dateStr} のタイムテーブル`;
+      document.getElementById('calendar-timetable-popout').classList.add('active');
+      currentCalendarDate = dateStr;
+      
+      if (!window.scheduledTasks[dateStr]) {
+        window.scheduledTasks[dateStr] = [];
+      }
+      
+      renderTimetable();
+    }
+
+    function closeTimetablePopout() {
+      document.getElementById('calendar-timetable-popout').classList.remove('active');
+    }
+
+    let isResizingTask = false;
+    let isCreatingTask = false;
+    let resizingTaskId = null;
+    let resizeStartY = 0;
+    let resizeStartDuration = 15;
+    let createStartY = 0;
+    let createEndY = 0;
+    let selectionEl = null;
+
+    function getRelativeY(e, container) {
+      const rect = container.getBoundingClientRect();
+      return e.clientY - rect.top;
+    }
+
+    document.addEventListener('mousedown', (e) => {
+      // Feature A: Resize
+      if (e.target.classList.contains('resize-handle')) {
+        e.stopPropagation();
+        isResizingTask = true;
+        resizingTaskId = e.target.closest('.absolute-task').getAttribute('data-id');
+        resizeStartY = e.clientY;
+        const taskObj = window.scheduledTasks[currentCalendarDate].find(t => t.id === resizingTaskId);
+        resizeStartDuration = taskObj.duration || 15;
+        return;
+      }
+      
+      // Feature B: Create
+      const dropArea = e.target.closest('.time-drop-area');
+      if (dropArea && !e.target.closest('.absolute-task') && !isCreatingTask) {
+        isCreatingTask = true;
+        const container = document.getElementById('timetable-relative-container');
+        createStartY = getRelativeY(e, container);
+        createEndY = createStartY;
+        
+        selectionEl = document.createElement('div');
+        selectionEl.className = 'drag-selection';
+        selectionEl.style.top = createStartY + 'px';
+        selectionEl.style.height = '0px';
+        container.appendChild(selectionEl);
+      }
+    });
+
+    document.addEventListener('mousemove', (e) => {
+      if (isResizingTask) {
+        const deltaY = e.clientY - resizeStartY;
+        const deltaMins = Math.round(deltaY / 2); // 2px = 1min
+        let newDuration = resizeStartDuration + deltaMins;
+        if (newDuration < 15) newDuration = 15;
+        
+        const taskEl = document.querySelector(`.absolute-task[data-id="${resizingTaskId}"]`);
+        if(taskEl) taskEl.style.height = (newDuration * 2) + 'px';
+      }
+      
+      if (isCreatingTask && selectionEl) {
+        const container = document.getElementById('timetable-relative-container');
+        createEndY = getRelativeY(e, container);
+        const top = Math.min(createStartY, createEndY);
+        const height = Math.abs(createEndY - createStartY);
+        selectionEl.style.top = top + 'px';
+        selectionEl.style.height = height + 'px';
+      }
+    });
+
+    document.addEventListener('mouseup', (e) => {
+      if (isResizingTask) {
+        const deltaY = e.clientY - resizeStartY;
+        const deltaMins = Math.round(deltaY / 2);
+        let newDuration = resizeStartDuration + deltaMins;
+        if (newDuration < 15) newDuration = 15;
+        newDuration = Math.round(newDuration / 15) * 15; // snap to 15m
+        
+        const taskObj = window.scheduledTasks[currentCalendarDate].find(t => t.id === resizingTaskId);
+        if(taskObj) taskObj.duration = newDuration;
+        
+        isResizingTask = false;
+        resizingTaskId = null;
+        renderTimetable();
+      }
+      
+      if (isCreatingTask) {
+        isCreatingTask = false;
+        if (selectionEl) {
+          const top = parseInt(selectionEl.style.top);
+          const height = parseInt(selectionEl.style.height);
+          selectionEl.remove();
+          selectionEl = null;
+          
+          if (height > 5) {
+            const startMins = top / 2;
+            const durationMins = Math.round(height / 2 / 15) * 15 || 15;
+            const snappedStartMins = Math.floor(startMins / 15) * 15;
+            
+            const totalMins = 5 * 60 + snappedStartMins;
+            const h = Math.floor(totalMins / 60);
+            const m = totalMins % 60;
+            
+            const newId = 'sched-' + Date.now();
+            if(!window.scheduledTasks[currentCalendarDate]) window.scheduledTasks[currentCalendarDate] = [];
+            const st = {
+              id: newId,
+              originalId: null,
+              title: '新規タスク',
+              h, m, duration: durationMins,
+              done: false
+            };
+            window.scheduledTasks[currentCalendarDate].push(st);
+            if(sbClient) sbClient.from('scheduled_tasks').insert([st]).catch(console.error);
+            renderTimetable();
+            
+            setTimeout(() => {
+              const input = document.querySelector(`.absolute-task[data-id="${newId}"] input[type="text"]`);
+              if(input) {
+                input.focus();
+                input.select();
+              }
+            }, 50);
+          }
+        }
+      }
+    });
+
+    // Top Page Table
+    function renderTopPageTable() {
+      const tbody = document.getElementById('top-task-tbody');
+      tbody.innerHTML = '';
+
+      // filter business tasks only
+      const businessTasks = getVisibleTasks('default').filter(t => t.type !== 'personal');
+
+      const sorted = [...businessTasks].sort((a, b) => {
+        if (a.status === 'submitted' && b.status !== 'submitted') return -1;
+        if (a.status !== 'submitted' && b.status === 'submitted') return 1;
+        return 0;
+      });
+
+      sorted.forEach(t => {
+        const st = statusMap[t.status] || statusMap['unstarted'];
+        const tr = document.createElement('tr');
+        
+        // Highlight logic for Manager view
+        if (currentUserRole === 'manager' && t.status === 'submitted') {
+          tr.style.backgroundColor = '#FFFBEB';
+        } else if (t.status === 'revising') {
+          tr.style.backgroundColor = '#FEF2F2'; // light red for revision
+        }
+
+        const isRevising = t.status === 'revising';
+        const isSubmitted = t.status === 'submitted';
+
+        let actionHtml = '';
+        if (currentUserRole === 'manager' && (isSubmitted || isRevising)) {
+          actionHtml = `
+            <div style="display:flex; gap:6px;">
+              <button class="action-btn-primary" style="padding:4px 10px; font-size:0.75rem; background:#10B981;" onclick="approveTask(${t.id})">承認</button>
+              <button class="view-mode-btn" style="padding:4px 10px; font-size:0.75rem; border-color:#EF4444; color:#EF4444;" onclick="reviseTask(${t.id})">修正</button>
+            </div>
+          `;
+        }
+
+        tr.innerHTML = `
+          <td><strong>${departments.find(d => d.id === t.department_id)?.name || ''}</strong></td>
+          <td>${t.title}</td>
+          <td>${users.find(u => u.id === t.assignee_id)?.name || ''}</td>
+          <td><span class="status-badge ${isRevising ? '' : st.class}" style="${isRevising ? 'background:#FEE2E2; color:#DC2626;' : ''}">${isRevising ? '修正中' : st.label}</span></td>
+          <td>
+            ${isRevising ? '<span style="color:#DC2626; font-weight:bold;">修正中</span>' : 
+            `<div style="display:flex; align-items:center; gap:8px;">
+              <div style="width:70px; height:6px; background:#E2E8F0; border-radius:10px; overflow:hidden;">
+                <div style="width:${t.progress}%; height:100%; background:${st.color};"></div>
+              </div>
+              <span style="font-weight:600; font-size:0.8rem;">${t.progress}%</span>
+            </div>` }
+          </td>
+          <td>${actionHtml}</td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    function approveTask(id) {
+      const task = tasks.find(t => t.id === id);
+      if(task) {
+        task.status = 'completed';
+        task.progress = 100;
+        renderAllViews();
+      }
+    }
+
+    function reviseTask(id) {
+      const comment = prompt("修正コメントを入力してください:");
+      const task = tasks.find(t => t.id === id);
+      if(task) {
+        task.status = 'revising';
+        // Keep progress as it was, but hide it in UI.
+        renderAllViews();
+      }
+    }
+
+    // Render Whiteboard Canvas
+    function renderInteractiveWhiteboard() {
+      const container = document.getElementById('wb-nodes-container');
+      if (!container) return;
+      container.innerHTML = '';
+
+      const deptTasks = getVisibleTasks('whiteboard').filter(t => t.department_id === currentDept && t.inTree !== false);
+      const initiatives = Array.from(new Set(deptTasks.map(t => t.initiative)));
+
+      if (initiatives.length === 0) {
+        initiatives.push('アタックリストの精度向上', '商談化率の改善');
+      }
+
+      // Render Draggable Marker Headers for Key Initiatives
+      initiatives.forEach((init, idx) => {
+        let mPos = initiativePositions.find(m => m.init === init);
+        if (!mPos) {
+          mPos = { init: init, x: 260 + idx * 440, y: 170 };
+          initiativePositions.push(mPos);
+        }
+
+        const mDiv = document.createElement('div');
+        mDiv.className = 'wb-marker-node';
+        mDiv.id = `wb-marker-${idx}`;
+        mDiv.style.left = mPos.x + 'px';
+        mDiv.style.top = mPos.y + 'px';
+        mDiv.setAttribute('data-init', init);
+        mDiv.innerHTML = `
+          <div class="wb-marker-title">施策: ${init}</div>
+          <div class="sticky-actions-container">
+            <div class="sticky-icon-btn" title="最上位タスク追加" onclick="event.stopPropagation(); window.pendingParentId=null; window.pendingBranchX=${mPos.x + 200}; window.pendingBranchY=${mPos.y + 100}; openAddTaskForInitiative('${init.replace(/\\/g, '\\\\').replace(/'/g, "\\\\'")}')">+</div>
+          </div>
+        `;
+
+        // Marker Header Group Drag Handler
+        mDiv.addEventListener('mousedown', (e) => {
+          dragType = 'marker';
+          dragMarkerInit = init;
+          mouseStartX = e.clientX;
+          mouseStartY = e.clientY;
+          initialDraggedPos = { x: mPos.x, y: mPos.y };
+
+          // Record initial positions of all tasks in this initiative for group move
+          initialDescendantPositions = {};
+          deptTasks.filter(t => t.initiative === init).forEach(t => {
+            initialDescendantPositions[t.id] = { x: t.x, y: t.y };
+          });
+          e.stopPropagation();
+        });
+
+        container.appendChild(mDiv);
+      });
+
+      // Render Draggable Sticky Notes
+      deptTasks.forEach(t => {
+        const st = statusMap[t.status];
+        const note = document.createElement('div');
+        const ratio = t.progress / 100;
+
+        // Color theme bases (RGB of the vivid theme color)
+        const colorMap = {
+          'sticky-yellow': { r: 250, g: 204, b: 21  },
+          'sticky-blue':   { r: 56,  g: 189, b: 248 },
+          'sticky-green':  { r: 74,  g: 222, b: 128 },
+          'sticky-purple': { r: 192, g: 132, b: 252 }
+        };
+        const theme = t.stickyColor || 'sticky-yellow';
+        const base = colorMap[theme] || colorMap['sticky-yellow'];
+        // Blend: 0% progress = near-white (10% color), 100% = full theme color
+        const minRatio = 0.10;
+        const blendRatio = minRatio + ratio * (1 - minRatio);
+        const bgR = Math.round(255 + (base.r - 255) * blendRatio);
+        const bgG = Math.round(255 + (base.g - 255) * blendRatio);
+        const bgB = Math.round(255 + (base.b - 255) * blendRatio);
+        const bgColor = `rgb(${bgR},${bgG},${bgB})`;
+        const borderAlpha = 0.4 + ratio * 0.6;
+        const borderColor = `rgba(${base.r},${base.g},${base.b},${borderAlpha})`;
+
+        note.className = `sticky-note-node ${t.status === 'submitted' ? 'submitted' : ''}`;
+        note.id = `sticky-node-${t.id}`;
+        note.style.left = (t.x || 300) + 'px';
+        note.style.top = (t.y || 300) + 'px';
+        note.style.backgroundColor = bgColor;
+        note.style.border = `1.5px solid ${borderColor}`;
+        note.style.color = '#1e293b';
+
+        const safeInit = (t.initiative || '').replace(/\\/g, '\\\\').replace(/'/g, "\\\\'");
+        note.innerHTML = `
+          <div class="sticky-title" onclick="openEditTaskModal(${t.id})">${t.title}</div>
+          <div class="sticky-meta">
+            <span>${t.deadline || '未定'}</span>
+            <span style="font-weight:700;color:${st.color};">${t.progress}%</span>
+          </div>
+          <div class="sticky-actions-container">
+            <div class="sticky-icon-btn split-btn" title="タスク分解" onclick="event.stopPropagation(); openSplitModal(${t.id})">✂</div>
+            <div class="sticky-icon-btn" title="分岐追加" onclick="event.stopPropagation(); window.pendingParentId=${t.id}; window.pendingBranchX=${t.x + 200}; window.pendingBranchY=${t.y + 160}; openAddTaskForInitiative('${safeInit}')">+</div>
+          </div>
+        `;
+
+        // Parent-Child Descendant Group Drag Handler for Sticky Note
+        note.addEventListener('mousedown', (e) => {
+          if (e.target.closest('.sticky-actions-container')) return;
+          dragType = 'task';
+          dragNodeId = t.id;
+          mouseStartX = e.clientX;
+          mouseStartY = e.clientY;
+          initialDraggedPos = { x: t.x, y: t.y };
+
+          // Record initial positions of all recursive child tasks
+          const descendantIds = getDescendantTaskIds(t.id);
+          initialDescendantPositions = {};
+          descendantIds.forEach(cId => {
+            const childTask = tasks.find(ct => ct.id === cId);
+            if (childTask) {
+              initialDescendantPositions[cId] = { x: childTask.x, y: childTask.y };
+            }
+          });
+          e.stopPropagation();
+        });
+
+        container.appendChild(note);
+      });
+
+      setTimeout(drawSvgBranchLines, 50);
+    }
+
+    // Dynamic SVG Line Connector Math (Originating from EXACT CENTER-BOTTOM of Root Card)
+    function drawSvgBranchLines() {
+      const svg = document.getElementById('wb-svg-layer');
+      if (!svg) return;
+      svg.innerHTML = '';
+
+      const rootNode = document.getElementById('wb-root-node');
+      if (!rootNode) return;
+
+      // Exact Center-Bottom of Root Card Node (700px X center, bottom edge Y)
+      const rootX = rootNode.offsetLeft + rootNode.offsetWidth / 2;
+      const rootY = rootNode.offsetTop + rootNode.offsetHeight;
+
+      const deptTasks = getVisibleTasks('whiteboard').filter(t => t.department_id === currentDept);
+      const markerNodes = document.querySelectorAll('.wb-marker-node');
+
+      // Connect Root Goal (Center-Bottom) -> Key Initiative Marker Headers (Center-Top)
+      markerNodes.forEach(mNode => {
+        const mX = mNode.offsetLeft + mNode.offsetWidth / 2;
+        const mY = mNode.offsetTop;
+        const initName = mNode.getAttribute('data-init');
+
+        drawCurvePath(svg, rootX, rootY, mX, mY, '#64748B', true, () => {
+          openAddTaskForInitiative(initName);
+        }, '施策の下にタスクを挿入');
+
+        // Connect Marker Header (Center-Bottom) -> Level 1 Sticky Notes (Center-Top)
+        const level1Tasks = deptTasks.filter(t => t.initiative === initName && !t.parentId);
+        level1Tasks.forEach(t => {
+          const tNode = document.getElementById(`sticky-node-${t.id}`);
+          if (tNode) {
+            const tX = tNode.offsetLeft + tNode.offsetWidth / 2;
+            const tY = tNode.offsetTop;
+            const mBottomY = mNode.offsetTop + mNode.offsetHeight;
+
+            drawCurvePath(svg, mX, mBottomY, tX, tY, '#0EA5E9', false, () => {
+              openInsertTaskBetween(null, t.id, initName);
+            }, '枝に新規タスクを挿入');
+          }
+        });
+      });
+
+      // Connect Parent Sticky Notes (Center-Bottom) -> Child Sticky Notes (Center-Top)
+      deptTasks.filter(t => t.parentId).forEach(child => {
+        const parent = deptTasks.find(p => p.id === child.parentId);
+        if (parent) {
+          const pNode = document.getElementById(`sticky-node-${parent.id}`);
+          const cNode = document.getElementById(`sticky-node-${child.id}`);
+
+          if (pNode && cNode) {
+            const pX = pNode.offsetLeft + pNode.offsetWidth / 2;
+            const pY = pNode.offsetTop + pNode.offsetHeight;
+            const cX = cNode.offsetLeft + cNode.offsetWidth / 2;
+            const cY = cNode.offsetTop;
+
+            drawCurvePath(svg, pX, pY, cX, cY, '#3B82F6', false, () => {
+              openInsertTaskBetween(parent.id, child.id, parent.initiative);
+            }, '分岐枝にタスクを挿入');
+          }
+        }
+      });
+    }
+
+    // Helper: Draw Bezier Curve Line + Interactive Insertion Button (+)
+    function drawCurvePath(svg, x1, y1, x2, y2, strokeColor, isDashed, onClickCallback, tooltipText) {
+      const midY = (y1 + y2) / 2;
+      const pathD = `M ${x1} ${y1} C ${x1} ${midY}, ${x2} ${midY}, ${x2} ${y2}`;
+
+      const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+      path.setAttribute('d', pathD);
+      path.setAttribute('class', 'branch-path');
+      path.setAttribute('stroke', strokeColor);
+      if (isDashed) path.setAttribute('stroke-dasharray', '5 3');
+      svg.appendChild(path);
+
+      // Midpoint Insertion Button (+)
+      const midX = (x1 + x2) / 2;
+      
+      const gOuter = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      gOuter.setAttribute('class', 'branch-add-node-btn');
+      gOuter.setAttribute('transform', `translate(${midX}, ${midY})`);
+
+      const gInner = document.createElementNS('http://www.w3.org/2000/svg', 'g');
+      gInner.setAttribute('class', 'branch-add-node-inner');
+
+      const hitArea = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      hitArea.setAttribute('r', '24');
+      hitArea.setAttribute('fill', 'transparent');
+
+      const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+      circle.setAttribute('r', '11');
+      circle.setAttribute('fill', '#0EA5E9');
+      circle.setAttribute('stroke', '#FFFFFF');
+      circle.setAttribute('stroke-width', '2');
+
+      const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+      text.setAttribute('text-anchor', 'middle');
+      text.setAttribute('dy', '4.5');
+      text.setAttribute('fill', '#FFFFFF');
+      text.setAttribute('font-size', '14');
+      text.setAttribute('font-weight', 'bold');
+      text.textContent = '+';
+
+      const title = document.createElementNS('http://www.w3.org/2000/svg', 'title');
+      title.textContent = tooltipText || 'クリックしてこの枝にタスクを挿入';
+
+      gInner.appendChild(circle);
+      gInner.appendChild(text);
+      gInner.appendChild(title);
+      gOuter.appendChild(hitArea);
+      gOuter.appendChild(gInner);
+
+      gOuter.addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (onClickCallback) onClickCallback();
+      });
+
+      svg.appendChild(gOuter);
+    }
+
+    // Branch Action Triggers
+    function openAddBranchSubTask(parentId, initiativeName) {
+      openAddTaskModal();
+      const parentTask = tasks.find(t => t.id === parentId);
+
+      document.getElementById('modal-heading').innerText = `「${parentTask ? parentTask.title.slice(0, 12) : ''}...」に分岐子タスクを追加`;
+      document.getElementById('modal-task-initiative').value = initiativeName;
+
+      const existingChildren = getVisibleTasks('default').filter(t => t.parentId === parentId);
+      const childCount = existingChildren.length;
+      const offsetX = (childCount % 2 === 0 ? 1 : -1) * Math.ceil(childCount / 2) * 250;
+
+      window.pendingParentId = parentId;
+      window.pendingBranchX = (parentTask?.x || 300) + offsetX;
+      window.pendingBranchY = (parentTask?.y || 300) + 210;
+    }
+
+    function openInsertTaskBetween(parentId, childId, initiativeName) {
+      openAddTaskModal();
+      document.getElementById('modal-heading').innerText = '枝の間に新しいタスクノードを挿入';
+      document.getElementById('modal-task-initiative').value = initiativeName;
+
+      const childTask = tasks.find(t => t.id === childId);
+      window.pendingParentId = parentId;
+      window.pendingChildId = childId;
+      window.pendingBranchX = (childTask?.x || 300);
+      window.pendingBranchY = (childTask?.y || 300) - 100;
+    }
+
+    // List View
+    function renderDeptListView() {
+      const tbody = document.getElementById('dept-task-tbody');
+      tbody.innerHTML = '';
+
+      const deptTasks = getVisibleTasks('whiteboard').filter(t => t.department_id === currentDept);
+
+      deptTasks.forEach(t => {
+        const st = statusMap[t.status];
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td style="color:var(--text-secondary); font-weight:500;">${t.initiative}</td>
+          <td><strong>${t.title}</strong></td>
+          <td>${users.find(u => u.id === t.assignee_id)?.name || ''}</td>
+          <td><span class="status-badge ${st.class}">${st.label}</span></td>
+          <td>
+            <div style="display:flex; align-items:center; gap:8px;">
+              <div style="width:60px; height:6px; background:#E2E8F0; border-radius:10px; overflow:hidden;">
+                <div style="width:${t.progress}%; height:100%; background:${st.color};"></div>
+              </div>
+              <span>${t.progress}%</span>
+            </div>
+          </td>
+          <td>${t.isRoutine ? '🔄 ルーティン' : 'ワンショット'}</td>
+          <td>
+            <button class="view-mode-btn" style="padding:4px 10px; font-size:0.8rem;" onclick="openEditTaskModal(${t.id})">
+              編集
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // Drawer Control
+    function toggleDrawerExpand() {
+      const drawer = document.getElementById('task-drawer');
+      const btn = document.getElementById('drawer-expand-btn');
+      if (drawer.classList.contains('expanded')) {
+        drawer.classList.remove('expanded');
+        if(btn) btn.innerText = '全画面展開';
+      } else {
+        drawer.classList.add('expanded');
+        if(btn) btn.innerText = '縮小';
+        renderDeptListView();
+      }
+    }
+
+    function renderDrawerTasks() {
+      const list = document.getElementById('drawer-task-list');
+      if(!list) return;
+      list.innerHTML = '';
+
+      const visibleTasks = getVisibleTasks('drawer').filter(t => t.inTree === false);
+
+      visibleTasks.forEach(t => {
+        const item = document.createElement('div');
+        item.className = 'drawer-task-item';
+        item.setAttribute('data-id', t.id);
+        
+        item.draggable = true;
+        item.ondragstart = (e) => {
+          e.dataTransfer.setData('text/plain', t.id);
+          e.dataTransfer.effectAllowed = 'move';
+        };
+        item.innerHTML = `
+          <div style="font-weight:700; font-size:0.9rem; margin-bottom:4px;">${t.title}</div>
+          <div style="font-size:0.75rem; color:var(--text-secondary);">締切: ${t.deadline || '未定'}</div>
+        `;
+        
+        list.appendChild(item);
+      });
+
+      // Init Sortable for Drawer with clone mode
+      if (window.Sortable) {
+        new Sortable(list, {
+          group: { name: 'timetable', pull: 'clone', put: false },
+          animation: 150,
+          sort: false
+        });
+      }
+    }
+
+    // Timetable View
+    function renderTimetable() {
+      const slotsContainerBg = document.getElementById('timetable-slots-bg');
+      const absoluteTasksContainer = document.getElementById('timetable-absolute-tasks');
+      if (!slotsContainerBg || !absoluteTasksContainer) return;
+      
+      // Generate 15-min background slots only once
+      if(slotsContainerBg.children.length === 0) {
+        let html = '';
+        for (let h = 5; h <= 23; h++) {
+          for (let m = 0; m < 60; m += 15) {
+            const timeStr = `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+            const isHour = m === 0;
+            html += `
+              <div class="time-slot ${isHour ? 'hour-mark' : ''}" data-time="${timeStr}">
+                <div class="time-label">${isHour ? timeStr : ''}</div>
+                <div class="time-drop-area" id="slot-${h}-${m}">
+                </div>
+              </div>
+            `;
+          }
+        }
+        slotsContainerBg.innerHTML = html;
+        initTimetableDND();
+      }
+
+      // Render Absolute Tasks
+      absoluteTasksContainer.innerHTML = '';
+
+      if (currentCalendarDate && window.scheduledTasks[currentCalendarDate]) {
+        window.scheduledTasks[currentCalendarDate].forEach(t => {
+          const duration = t.duration || 15;
+          const topPx = ((t.h - 5) * 60 + t.m) * 2;
+          const heightPx = duration * 2;
+          
+          const taskEl = document.createElement('div');
+          taskEl.className = 'absolute-task';
+          taskEl.setAttribute('data-id', t.id);
+          taskEl.style.top = topPx + 'px';
+          taskEl.style.height = heightPx + 'px';
+          
+          taskEl.innerHTML = `
+            <div class="task-content">
+              <input type="text" value="${t.title}" onchange="updateScheduledTaskTitle('${t.id}', this.value)" />
+              <div class="task-controls">
+                <input type="checkbox" ${t.done ? 'checked' : ''} onchange="toggleScheduledTaskDone('${t.id}', this.checked)" title="完了" />
+                <span style="font-size:0.7rem; cursor:pointer;" onclick="unscheduleTask('${t.id}')">✖</span>
+              </div>
+            </div>
+            <div class="resize-handle"></div>
+          `;
+          
+          // Stop propagation on inputs so dragging doesn't start
+          const input = taskEl.querySelector('input[type="text"]');
+          if(input) input.addEventListener('mousedown', e => e.stopPropagation());
+          const checkbox = taskEl.querySelector('input[type="checkbox"]');
+          if(checkbox) checkbox.addEventListener('mousedown', e => e.stopPropagation());
+          
+          absoluteTasksContainer.appendChild(taskEl);
+        });
+      }
+    }
+
+    function updateScheduledTaskTitle(id, newTitle) {
+      if(!currentCalendarDate || !window.scheduledTasks[currentCalendarDate]) return;
+      const t = window.scheduledTasks[currentCalendarDate].find(x => x.id === id);
+      if(t) t.title = newTitle;
+    }
+
+    function toggleScheduledTaskDone(id, isDone) {
+      if(!currentCalendarDate || !window.scheduledTasks[currentCalendarDate]) return;
+      const t = window.scheduledTasks[currentCalendarDate].find(x => x.id === id);
+      if(t) {
+        t.done = isDone;
+        if(sbClient) if(sbClient) sbClient.from('scheduled_tasks').update({ completed: isDone }).eq('id', id).eq('date', currentCalendarDate).catch(console.error);
+      }
+    }
+
+    function unscheduleTask(id) {
+      if(!currentCalendarDate || !window.scheduledTasks[currentCalendarDate]) return;
+      window.scheduledTasks[currentCalendarDate] = window.scheduledTasks[currentCalendarDate].filter(x => x.id !== id);
+      if(sbClient) if(sbClient) sbClient.from('scheduled_tasks').delete().eq('id', id).eq('date', currentCalendarDate).catch(console.error);
+      renderTimetable();
+    }
+
+    function initTimetableDND() {
+      if (!window.Sortable) return;
+      const dropAreas = document.querySelectorAll('.time-drop-area');
+      dropAreas.forEach(area => {
+        new Sortable(area, {
+          group: 'timetable',
+          animation: 150,
+          onAdd: function (evt) {
+            const taskId = evt.item.getAttribute('data-id');
+            const slotId = area.id.replace('slot-', '').split('-');
+            const h = parseInt(slotId[0]);
+            const m = parseInt(slotId[1]);
+            
+            const task = tasks.find(t => t.id === taskId);
+            if (task && currentCalendarDate) {
+              const newId = 'sched-' + Date.now() + Math.floor(Math.random() * 1000);
+              if(!window.scheduledTasks[currentCalendarDate]) window.scheduledTasks[currentCalendarDate] = [];
+              const st = {
+                id: newId,
+                originalId: taskId,
+                title: task.title,
+                h, m,
+                duration: 15, // Default 15 mins
+                done: false
+              };
+              window.scheduledTasks[currentCalendarDate].push(st);
+              if(sbClient) sbClient.from('scheduled_tasks').insert([st]).catch(console.error);              
+              evt.item.remove();
+              setTimeout(renderTimetable, 50); 
+            } else {
+              evt.item.remove();
+            }
+          }
+        });
+      });
+    }
+
+    // Modal Control
+    function toggleRoutineInputs() {
+      const type = document.getElementById('modal-task-routine-type').value;
+      const container = document.getElementById('routine-inputs');
+      const dayGroup = document.getElementById('routine-day-group');
+      if (type === 'none') {
+        container.style.display = 'none';
+      } else {
+        container.style.display = 'block';
+        dayGroup.style.display = (type === 'weekly') ? 'block' : 'none';
+      }
+    }
+
+    
+    function toggleTaskTypeInputs() {
+      const typeNode = document.querySelector('input[name="modal-task-type"]:checked');
+      if (!typeNode) return;
+      const type = typeNode.value;
+      const gInit = document.getElementById('group-task-initiative');
+      const gAssignee = document.getElementById('group-task-assignee');
+      const gApproval = document.getElementById('group-task-approval');
+      const gRoutine = document.getElementById('group-task-routine');
+      
+      const displayVal = (type === 'personal') ? 'none' : 'block';
+      if (gInit) gInit.style.display = displayVal;
+      if (gAssignee) gAssignee.style.display = displayVal;
+      if (gApproval) gApproval.style.display = displayVal;
+      if (gRoutine) gRoutine.style.display = displayVal;
+    }
+
+    function handleSliderInput(val) {
+      val = parseInt(val);
+      document.getElementById('range-val-display').innerText = val + '%';
+      const isApprovalRequired = document.querySelector('input[name="modal-task-approval"]:checked').value === 'true';
+      const tick85 = document.getElementById('tick-85');
+      
+      if (isApprovalRequired) {
+        tick85.style.display = 'block';
+      } else {
+        tick85.style.display = 'none';
+      }
+
+      let status = 'unstarted';
+      let statusName = '未着手';
+      
+      if (val >= 100) {
+        status = 'completed';
+        statusName = '完了';
+      } else if (val >= 85 && isApprovalRequired) {
+        status = 'submitted';
+        statusName = '提出';
+      } else if (val >= 60) {
+        status = 'sixty';
+        statusName = '6割';
+      } else if (val >= 10) {
+        status = 'in-progress';
+        statusName = '着手';
+      }
+      
+      document.getElementById('modal-status-text').innerText = statusName;
+      document.getElementById('modal-internal-status').value = status;
+      currentStatusFilterInModal = status;
+    }
+
+    function openAddTaskModal() {
+      document.getElementById('modal-heading').innerText = '新規付箋タスクの追加';
+      document.getElementById('modal-task-id').value = '';
+      document.getElementById('modal-task-title').value = '';
+      document.getElementById('modal-task-assignee').value = '山田 太郎';
+      document.querySelector('input[name="modal-task-approval"][value="true"]').checked = true;
+      document.getElementById('modal-task-routine-type').value = 'none';
+      toggleRoutineInputs();
+      
+      window.pendingParentId = null;
+      window.pendingChildId = null;
+      window.pendingBranchX = null;
+      window.pendingBranchY = null;
+      
+      document.getElementById('modal-task-progress-range').value = 0;
+      handleSliderInput(0);
+      
+      document.getElementById('task-modal').classList.add('active');
+    }
+
+    function openAddTaskForInitiative(initName) {
+      openAddTaskModal();
+      window.pendingInitiative = initName;
+    }
+
+    function openEditTaskModal(id) {
+      const task = tasks.find(t => t.id === id);
+      if (!task) return;
+
+      document.getElementById('modal-heading').innerText = '付箋タスクの編集・進捗更新';
+      document.getElementById('modal-task-id').value = task.id;
+      document.getElementById('modal-task-title').value = task.title;
+      document.getElementById('modal-task-assignee').value = task.assignee_id || '';
+      
+      const appReq = task.isApprovalRequired !== false;
+      document.querySelector(`input[name="modal-task-approval"][value="${appReq}"]`).checked = true;
+      document.getElementById('modal-task-routine-type').value = task.routineType || (task.isRoutine ? 'weekly' : 'none');
+      document.getElementById('modal-task-routine-day').value = task.routineDay || 'Monday';
+      document.getElementById('modal-task-routine-time').value = task.routineTime || '05:00';
+      toggleRoutineInputs();
+
+      document.getElementById('modal-task-progress-range').value = task.progress || 0;
+      handleSliderInput(task.progress || 0);
+
+      document.getElementById('task-modal').classList.add('active');
+    }
+
+    
+    // --- Split Task Feature ---
+    function openSplitModal(taskId) {
+      const task = tasks.find(t => t.id === taskId);
+      if (!task) return;
+      document.getElementById('split-original-task-id').value = task.id;
+      document.getElementById('split-original-task-title').innerText = task.title;
+      const container = document.getElementById('split-new-tasks-container');
+      container.innerHTML = '';
+      addSplitTaskForm();
+      document.getElementById('split-modal').classList.add('active');
+    }
+
+    function addSplitTaskForm() {
+      const container = document.getElementById('split-new-tasks-container');
+      const div = document.createElement('div');
+      div.style.cssText = 'padding: 12px; border: 1px solid #E2E8F0; border-radius: 6px; margin-bottom: 12px; background: white; position: relative;';
+      div.className = 'split-task-form';
+      div.innerHTML = `
+        <div class="form-group" style="margin-bottom: 8px;">
+          <label class="form-label">タスク名</label>
+          <input type="text" class="form-input split-title" placeholder="分解後のタスク名">
+        </div>
+        <div class="form-group" style="margin-bottom: 0;">
+          <label class="form-label">締め切り</label>
+          <input type="date" class="form-input split-deadline">
+        </div>
+        <button type="button" onclick="this.parentElement.remove()" style="position: absolute; top: 8px; right: 8px; background: transparent; border: none; font-size: 18px; cursor: pointer; color: #94A3B8;">&times;</button>
+      `;
+      container.appendChild(div);
+    }
+
+    function executeSplitTask() {
+      const origId = parseInt(document.getElementById('split-original-task-id').value);
+      const origTaskIndex = tasks.findIndex(t => t.id === origId);
+      if (origTaskIndex === -1) return;
+      const origTask = tasks[origTaskIndex];
+
+      const forms = document.querySelectorAll('.split-task-form');
+      const newTasksData = [];
+      let hasError = false;
+
+      forms.forEach(form => {
+        const title = form.querySelector('.split-title').value.trim();
+        const deadline = form.querySelector('.split-deadline').value;
+        if (!title) hasError = true;
+        newTasksData.push({ title, deadline });
+      });
+
+      if (newTasksData.length === 0 || hasError) {
+        alert('すべてのタスク名を入力してください');
+        return;
+      }
+
+      const colors = ['sticky-yellow', 'sticky-blue', 'sticky-green', 'sticky-purple'];
+      const spacingY = 160;
+      
+      let lastGeneratedId = null;
+
+      newTasksData.forEach((nt, idx) => {
+        const newId = crypto.randomUUID();
+        lastGeneratedId = newId;
+        const newTask = {
+          id: newId,
+          department_id: origTask.department_id,
+          initiative: origTask.initiative,
+          title: nt.title,
+          assignee_id: origTask.assignee_id,
+          status: 'unstarted',
+          progress: 0,
+          stickyColor: colors[Math.floor(Math.random() * colors.length)],
+          isApprovalRequired: origTask.isApprovalRequired !== undefined ? origTask.isApprovalRequired : true,
+          routineType: 'none',
+          isRoutine: false,
+          isToday: origTask.isToday,
+          priority: origTask.priority,
+          deadline: nt.deadline || origTask.deadline,
+          x: origTask.x,
+          y: origTask.y + (idx * spacingY),
+          parentId: origTask.parentId
+        };
+        tasks.push(newTask);
+        if(sbClient) if(sbClient) sbClient.from('tasks').insert([newTask]).catch(console.error);
+      });
+
+      // Update child tasks to point to the LAST generated task
+      if (lastGeneratedId !== null) {
+        tasks.forEach(t => {
+          if (t.parentId === origTask.id) {
+            t.parentId = lastGeneratedId;
+          }
+        });
+      }
+
+      // Remove original task
+      tasks.splice(origTaskIndex, 1);
+
+      closeModal('split-modal');
+      renderAllViews();
+    }
+
+    function closeModal(modalId) {
+      document.getElementById(modalId).classList.remove('active');
+    }
+
+    function saveTaskModal() {
+      const idVal = document.getElementById('modal-task-id').value;
+      const title = document.getElementById('modal-task-title').value.trim();
+      const assignee = document.getElementById('modal-task-assignee').value;
+      const progress = parseInt(document.getElementById('modal-task-progress-range').value);
+      const isApprovalRequired = document.querySelector('input[name="modal-task-approval"]:checked').value === 'true';
+      const routineType = document.getElementById('modal-task-routine-type').value;
+      const routineDay = document.getElementById('modal-task-routine-day').value;
+      const routineTime = document.getElementById('modal-task-routine-time').value;
+      const status = document.getElementById('modal-internal-status').value;
+
+      if (!title) {
+        alert('タスク名を入力してください');
+        return;
+      }
+
+      const colors = ['sticky-yellow', 'sticky-blue', 'sticky-green', 'sticky-purple'];
+      const randomColor = colors[Math.floor(Math.random() * colors.length)];
+
+      if (idVal) {
+        const task = tasks.find(t => t.id === idVal);
+        if (task) {
+          task.title = title;
+          task.type = taskType;
+          task.assignee_id = assignee_id;
+          if (taskType === 'personal') task.initiative = '';
+          else if (document.getElementById('modal-task-initiative')) task.initiative = document.getElementById('modal-task-initiative').value;
+          task.status = status;
+          task.progress = progress;
+          task.isApprovalRequired = isApprovalRequired;
+          task.routineType = routineType;
+          task.routineDay = routineDay;
+          task.routineTime = routineTime;
+          task.isRoutine = (routineType !== 'none');
+          if(sbClient) if(sbClient) sbClient.from('tasks').update({ type: task.type, title: task.title, assignee_id: task.assignee_id, status: task.status, progress: task.progress, isApprovalRequired: task.isApprovalRequired, routineType: task.routineType, routineDay: task.routineDay, routineTime: task.routineTime, isRoutine: task.isRoutine, initiative: task.initiative }).eq('id', task.id).catch(console.error);
+        }
+      } else {
+        const newId = crypto.randomUUID();
+        let defaultX = 300;
+        let defaultY = 300;
+        
+        const initiative = window.pendingInitiative || "アタックリストの精度向上";
+
+        const deptTasks = getVisibleTasks('default').filter(t => t.department_id === currentDept && t.initiative === initiative);
+        const initiatives = Array.from(new Set(getVisibleTasks('default').filter(t => t.department_id === currentDept).map(t => t.initiative)));
+        const initIdx = initiatives.indexOf(initiative);
+        const totalCols = Math.max(1, initiatives.length);
+        const colWidth = 460;
+        const startX = 700 - ((totalCols - 1) * colWidth) / 2;
+
+        if (initIdx >= 0) {
+          defaultX = startX + initIdx * colWidth - 120;
+          defaultY = 280 + deptTasks.length * 190;
+        }
+
+        const newTask = {
+          id: newId,
+          department_id: currentDept,
+          initiative: initiative,
+          title: title,
+          assignee_id: assignee_id,
+          status: status,
+          progress: progress,
+          stickyColor: randomColor,
+          isApprovalRequired: isApprovalRequired,
+          routineType: routineType,
+          routineDay: routineDay,
+          routineTime: routineTime,
+          isRoutine: (routineType !== 'none'),
+          isToday: true,
+          priority: 'mid',
+          x: window.pendingBranchX || defaultX,
+          y: window.pendingBranchY || defaultY,
+          parentId: window.pendingParentId || null
+        };
+
+        if (window.pendingChildId) {
+          const childTask = tasks.find(t => t.id === window.pendingChildId);
+          if (childTask) {
+            childTask.parentId = newId;
+            if(sbClient) if(sbClient) sbClient.from('tasks').update({parentId: newId}).eq('id', childTask.id).catch(console.error);
+          }
+        }
+
+        tasks.push(newTask);
+        if(sbClient) if(sbClient) sbClient.from('tasks').insert([newTask]).catch(console.error);
+      }
+
+      window.pendingParentId = null;
+      window.pendingChildId = null;
+      window.pendingBranchX = null;
+      window.pendingBranchY = null;
+      window.pendingInitiative = null;
+
+      closeModal('task-modal');
+      renderAllViews();
+    }
+
+    function deleteCurrentTask() {
+      const idVal = document.getElementById('modal-task-id').value;
+      if (!idVal) return;
+
+      if (confirm('このタスクを削除してもよろしいですか？')) {
+        tasks = tasks.filter(t => t.id !== idVal && t.id !== parseInt(idVal));
+        if(sbClient) if(sbClient) sbClient.from('tasks').delete().eq('id', idVal).catch(console.error);
+        closeModal('task-modal');
+        renderAllViews();
+      }
+    }
+  
+    function dropTaskToTree(e) {
+      e.preventDefault();
+      const taskId = e.dataTransfer.getData('text/plain');
+      if (!taskId) return;
+      
+      const task = tasks.find(t => t.id === taskId);
+      if (task) {
+        // Calculate position relative to canvas layer considering scroll
+        const layer = document.getElementById('wb-canvas-layer');
+        const viewport = document.getElementById('wb-viewport');
+        const rect = layer.getBoundingClientRect();
+        
+        task.x = e.clientX - rect.left;
+        task.y = e.clientY - rect.top;
+        task.inTree = true;
+        
+        renderAllViews();
+        renderInteractiveWhiteboard();
+      }
+    }
+
+    window.onload = () => {
+      const defaultDeptBtn = document.querySelector('.dept-btn.active') || document.querySelector('.dept-btn');
+      if (defaultDeptBtn) {
+        selectDepartment(departments.length > 0 ? departments[0].id : null, defaultDeptBtn);
+      } else {
+        renderAllViews();
+      }
+    };
+  </script>
+</body>
+</html>
