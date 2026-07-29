@@ -557,25 +557,37 @@
       position: absolute;
       top: 40px;
       left: 700px;
-      margin-left: -270px;
-      z-index: 5;
-      width: 540px;
-      background: #FFFFFF;
-      border: 2px dashed #64748B;
-      border-radius: var(--radius-md);
-      padding: 14px 24px;
+      margin-left: -300px;
+      z-index: 6;
+      width: 600px;
+      background: linear-gradient(135deg, #1e1b4b 0%, #4338ca 48%, #7c3aed 100%);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 20px;
+      padding: 26px 36px;
       text-align: center;
-      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+      box-shadow: 0 24px 48px -12px rgba(76, 29, 149, 0.55), 0 0 0 1px rgba(124, 58, 237, 0.15);
+    }
+
+    .wb-root-eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 0.75rem;
+      font-weight: 800;
+      letter-spacing: 0.14em;
+      color: #ddd6fe;
+      text-transform: uppercase;
+      margin-bottom: 10px;
     }
 
     .wb-root-label {
       font-family: var(--font-marker);
-      font-size: 1.2rem;
-      font-weight: 700;
-      color: #0F172A;
-      background: linear-gradient(180deg, transparent 65%, rgba(56, 189, 248, 0.4) 65%);
-      display: inline-block;
-      padding: 0 6px;
+      font-size: 1.7rem;
+      font-weight: 800;
+      color: #ffffff;
+      display: block;
+      line-height: 1.4;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
     }
 
     /* Key Initiatives DRAGGABLE Marker Headers */
@@ -605,6 +617,293 @@
       transform: rotate(-1deg);
       border: 1px solid rgba(250, 204, 21, 0.6);
     }
+
+    /* Admin task zone: real canvas-space area (pans/zooms with the tree) for
+       independent tasks with no parentId/initiativeId */
+    .wb-admin-zone {
+      position: absolute;
+      left: 40px;
+      top: 40px;
+      width: 240px;
+      min-height: 640px;
+      z-index: 1;
+      border: 2px dashed #CBD5E1;
+      border-radius: var(--radius-md);
+      background: rgba(248, 250, 252, 0.6);
+    }
+
+    .wb-admin-zone-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 10px 12px;
+      font-size: 0.85rem;
+      font-weight: 800;
+      color: var(--text-secondary);
+    }
+
+    .wb-admin-zone-add-btn {
+      border: 1px dashed #94A3B8;
+      background: transparent;
+      color: var(--text-secondary);
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 999px;
+      cursor: pointer;
+    }
+    .wb-admin-zone-add-btn:hover { background: #F1F5F9; }
+
+    /* Top page: all-departments main goal cards (styled to match wb-root-node) */
+    .top-maingoal-section { margin: 24px 0; }
+
+    .top-maingoal-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+      gap: 16px;
+    }
+
+    .top-maingoal-card {
+      background: linear-gradient(135deg, #1e1b4b 0%, #4338ca 48%, #7c3aed 100%);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 18px;
+      padding: 20px;
+      box-shadow: 0 16px 32px -10px rgba(76, 29, 149, 0.45), 0 0 0 1px rgba(124, 58, 237, 0.12);
+      color: #ffffff;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .top-maingoal-dept {
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: #ddd6fe;
+    }
+
+    .top-maingoal-text {
+      font-family: var(--font-marker);
+      font-size: 1.1rem;
+      font-weight: 800;
+      line-height: 1.45;
+      text-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+      flex: 1;
+    }
+
+    .top-maingoal-edit-btn {
+      align-self: flex-start;
+      background: rgba(255, 255, 255, 0.14);
+      border: 1px solid rgba(255, 255, 255, 0.32);
+      color: #ffffff;
+      font-size: 0.72rem;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 999px;
+      cursor: pointer;
+    }
+    .top-maingoal-edit-btn:hover { background: rgba(255, 255, 255, 0.26); }
+
+    .top-dept-monthly-divider {
+      border-top: 1px solid rgba(255, 255, 255, 0.18);
+      padding-top: 10px;
+      margin-top: 2px;
+    }
+
+    .top-dept-monthly-title {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      color: #ddd6fe;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .top-dept-monthly-add-btn {
+      background: rgba(255, 255, 255, 0.14);
+      border: 1px dashed rgba(255, 255, 255, 0.4);
+      color: #ffffff;
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 2px 8px;
+      border-radius: 999px;
+      cursor: pointer;
+    }
+    .top-dept-monthly-add-btn:hover { background: rgba(255, 255, 255, 0.26); }
+
+    .top-dept-monthly-list {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .top-dept-monthly-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: rgba(255, 255, 255, 0.14);
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      color: #ffffff;
+      padding: 4px 8px;
+      border-radius: 999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+
+    .top-dept-monthly-chip button {
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      color: #ffffff;
+      opacity: 0.85;
+      font-size: 0.8rem;
+      line-height: 1;
+      padding: 0;
+    }
+    .top-dept-monthly-chip button.chip-delete:hover { color: #FCA5A5; }
+    .top-dept-monthly-chip button.chip-edit:hover { color: #BFDBFE; }
+
+    .top-dept-monthly-empty {
+      font-size: 0.72rem;
+      color: #ddd6fe;
+      opacity: 0.8;
+    }
+
+    /* Finance figures (total_sales / total_investment) inside top-page dept cards */
+    .top-dept-finance-divider {
+      border-top: 1px solid rgba(255, 255, 255, 0.18);
+      padding-top: 10px;
+      margin-top: 2px;
+    }
+
+    .top-dept-finance-title {
+      font-size: 0.72rem;
+      font-weight: 800;
+      letter-spacing: 0.06em;
+      color: #ddd6fe;
+      text-transform: uppercase;
+      margin-bottom: 8px;
+    }
+
+    .top-dept-finance-view {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 16px;
+    }
+
+    .top-dept-finance-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .top-dept-finance-label {
+      font-size: 0.68rem;
+      color: #ddd6fe;
+      opacity: 0.85;
+    }
+
+    .top-dept-finance-value {
+      font-family: var(--font-marker);
+      font-size: 1.05rem;
+      font-weight: 800;
+      color: #ffffff;
+    }
+
+    .top-dept-finance-edit-btn {
+      margin-left: auto;
+      background: rgba(255, 255, 255, 0.14);
+      border: 1px solid rgba(255, 255, 255, 0.32);
+      color: #ffffff;
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 4px 10px;
+      border-radius: 999px;
+      cursor: pointer;
+    }
+    .top-dept-finance-edit-btn:hover { background: rgba(255, 255, 255, 0.26); }
+
+    .top-dept-finance-edit {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .top-dept-finance-edit label {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      font-size: 0.72rem;
+      color: #ddd6fe;
+    }
+
+    .top-dept-finance-edit input[type="number"] {
+      background: rgba(255, 255, 255, 0.92);
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      border-radius: 8px;
+      padding: 6px 8px;
+      font-size: 0.9rem;
+      color: #0F172A;
+    }
+
+    .top-dept-finance-edit-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .top-dept-finance-save-btn {
+      background: #ffffff;
+      color: #4338ca;
+      border: none;
+      font-size: 0.75rem;
+      font-weight: 800;
+      padding: 6px 14px;
+      border-radius: 999px;
+      cursor: pointer;
+    }
+
+    .top-dept-finance-cancel-btn {
+      background: rgba(255, 255, 255, 0.14);
+      border: 1px solid rgba(255, 255, 255, 0.32);
+      color: #ffffff;
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 6px 14px;
+      border-radius: 999px;
+      cursor: pointer;
+    }
+    .top-dept-finance-cancel-btn:hover { background: rgba(255, 255, 255, 0.24); }
+
+    /* Monthly goal chip — used inside the top-page department cards */
+    .monthly-goal-chip {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      background: #EFF6FF;
+      border: 1px solid #BFDBFE;
+      color: #1E3A8A;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 0.8rem;
+      font-weight: 600;
+    }
+
+    .monthly-goal-chip button {
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      color: #3B82F6;
+      font-size: 0.85rem;
+      line-height: 1;
+      padding: 0;
+    }
+    .monthly-goal-chip button.chip-delete { color: #EF4444; }
 
     /* STICKY NOTES ABSOLUTE DRAGGABLE NODES */
     .sticky-note-node {
@@ -1006,6 +1305,7 @@
     .drawer-task-item {
       background: white; border: 1px solid var(--border-color); border-radius: var(--radius-sm);
       padding: 12px; margin-bottom: 8px;  box-shadow: var(--shadow-sm);
+      width: 100%; box-sizing: border-box; overflow-wrap: break-word; word-break: break-word;
     }
     .drawer-task-item:active { cursor: grabbing; box-shadow: var(--shadow-md); }
     
@@ -1055,6 +1355,7 @@
     .timeline-node:last-child::before { display: none; }
     .timeline-date { width: 120px; flex-shrink: 0; display: flex; align-items: center; gap: 12px; cursor: pointer; }
     .timeline-dot { width: 16px; height: 16px; border-radius: 50%; background: var(--brand-primary); border: 3px solid white; box-shadow: 0 0 0 1px var(--brand-primary); z-index: 1; transition: transform 0.2s; }
+    .timeline-dot.today { background: #3B82F6; box-shadow: 0 0 0 1px #3B82F6, 0 0 0 4px rgba(59, 130, 246, 0.25); }
     .timeline-date:hover .timeline-dot { transform: scale(1.2); }
     .timeline-date-text { font-weight: 700; font-size: 1.1rem; color: var(--text-primary); transition: color 0.2s; }
     .timeline-date:hover .timeline-date-text { color: var(--brand-primary); }
@@ -1068,10 +1369,83 @@
     .calendar-timetable-popout.active { transform: translateX(0); opacity: 1; }
     .popout-header { padding: 12px 20px; border-bottom: 1px solid var(--border-color); display: flex; justify-content: space-between; align-items: center; background: #F8FAFC; }
     .compact-timetable-wrapper { flex: 1; overflow-y: auto; background: #F8FAFC; }
+
+    /* Login gate — shown on every load until a user logs in */
+    .login-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      background: linear-gradient(135deg, #1e1b4b 0%, #4338ca 55%, #7c3aed 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .login-overlay.hidden { display: none; }
+
+    .login-card {
+      background: #ffffff;
+      border-radius: 20px;
+      padding: 40px 36px;
+      width: 380px;
+      max-width: 90vw;
+      box-shadow: 0 30px 60px -15px rgba(0, 0, 0, 0.4);
+      text-align: center;
+    }
+
+    .login-logo {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      margin-bottom: 20px;
+      color: #4338ca;
+      font-weight: 800;
+      font-size: 1.1rem;
+    }
+
+    .login-title {
+      font-size: 1.4rem;
+      font-weight: 800;
+      margin-bottom: 6px;
+      color: #0F172A;
+    }
+
+    .login-subtitle {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin-bottom: 20px;
+    }
+
+    #login-user-select {
+      width: 100%;
+      margin-bottom: 16px;
+      padding: 10px 12px;
+      font-size: 0.95rem;
+    }
+
+    .login-submit-btn {
+      width: 100%;
+      justify-content: center;
+      padding: 12px;
+      font-size: 1rem;
+    }
   </style>
 </head>
 <body>
 
+  <!-- LOGIN GATE: shown on every page load until a user logs in -->
+  <div class="login-overlay" id="login-overlay">
+    <div class="login-card">
+      <div class="login-logo">
+        <svg width="28" height="28" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+        <span>Tend Portal</span>
+      </div>
+      <h2 class="login-title">ログイン</h2>
+      <p class="login-subtitle">ユーザーを選択してログインしてください</p>
+      <select id="login-user-select" class="form-select"></select>
+      <button class="action-btn-primary login-submit-btn" onclick="performLogin()">ログイン</button>
+    </div>
+  </div>
 
   <!-- APP HEADER -->
   <header class="app-header">
@@ -1131,7 +1505,7 @@
           <div class="card-footer-link">閲覧する &rarr;</div>
         </div>
 
-        <div class="portal-card" onclick="alert('【全社事業戦略・計画】\n・2026年度 Q3重点施策：新規顧客獲得数の200%達成\n・組織目標：インターン育成プロセスの体系化と自動化')">
+        <div class="portal-card" onclick="alert('【全社事業戦略・計画】\n・2026年度 Q3施策・プロジェクト：新規顧客獲得数の200%達成\n・組織目標：インターン育成プロセスの体系化と自動化')">
           <div class="card-icon">
             <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
           </div>
@@ -1150,11 +1524,30 @@
         </div>
       </div>
 
+      <div class="top-maingoal-section">
+        <div class="section-header" style="margin-bottom: 16px;">
+          <h2 style="font-size: 1.25rem; font-weight: 700;">🎯 事業部目標</h2>
+          <div style="font-size: 0.85rem; color: var(--text-secondary);">
+            全事業部の目標をここから確認・編集できます
+          </div>
+        </div>
+        <div class="top-maingoal-grid" id="top-maingoal-grid">
+          <!-- Dynamically populated by renderTopDeptCards -->
+        </div>
+      </div>
+
       <div class="section-header" style="margin-bottom: 16px;">
         <h2 style="font-size: 1.25rem; font-weight: 700;">全事業部タスク・承認申請キュー</h2>
         <div style="font-size: 0.85rem; color: var(--text-secondary);">
           ※ 「提出（承認申請）」されたタスクは上位に優先表示されます
         </div>
+      </div>
+
+      <div style="margin-bottom: 12px; display: flex; align-items: center; gap: 10px;">
+        <label style="font-size: 0.85rem; font-weight: 600; color: var(--text-secondary);">事業部で絞り込み:</label>
+        <select id="top-task-dept-filter" class="form-select" style="max-width: 240px;" onchange="renderTopPageTable()">
+          <option value="all">すべての事業部</option>
+        </select>
       </div>
 
       <div class="table-card">
@@ -1184,7 +1577,6 @@
       <!-- Dynamically populated by initDeptTabs -->
     </div>
 
-
       <div class="view-mode-bar">
         <div class="view-mode-tabs">
           <button class="view-mode-btn active" onclick="switchDeptView('tree-view', this)">
@@ -1196,27 +1588,37 @@
             タスクカレンダー
           </button>
         </div>
-
-        <button class="action-btn-primary" onclick="openAddTaskModal()">
-          <svg width="16" height="16" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg>
-          新規付箋タスクを追加
-        </button>
       </div>
 
       <!-- VIEW 1: INTERACTIVE WHITEBOARD VIEWPORT -->
       <div id="tree-view" class="dept-subview active">
 
         <div class="whiteboard-viewport" id="wb-viewport" ondragover="event.preventDefault();" ondrop="dropTaskToTree(event)">
-          
+
+          <!-- Always-on zoom toolbar, fixed to the viewport (not the pannable canvas) -->
+          <div class="zoom-controls-bar">
+            <button class="zoom-btn" onclick="zoomOut()" title="縮小">－</button>
+            <span class="zoom-level-text" id="zoom-text">100%</span>
+            <button class="zoom-btn" onclick="zoomIn()" title="拡大">＋</button>
+            <button class="zoom-btn" onclick="resetZoomPan()" title="リセット">⟲</button>
+          </div>
 
           <!-- Transform Canvas Layer -->
           <div class="whiteboard-canvas-layer" id="wb-canvas-layer">
             <!-- Infinite SVG Line Layer -->
             <svg class="wb-svg-layer" id="wb-svg-layer"></svg>
 
+            <!-- Admin task zone: independent tasks not linked to any initiative/parent -->
+            <div class="wb-admin-zone" id="wb-admin-zone">
+              <div class="wb-admin-zone-title">
+                <span>🗂️ 事務タスク</span>
+                <button class="wb-admin-zone-add-btn" onclick="addAdminTask()" title="事務タスクを追加">+ 追加</button>
+              </div>
+            </div>
+
             <!-- Root Goal Node (Center Bottom Origin) -->
             <div class="wb-root-node" id="wb-root-node">
-              <span style="font-size:0.75rem; color:#64748B; display:block; font-weight:700;">【事業部目標起点】</span>
+              <div class="wb-root-eyebrow">🎯 事業部目標</div>
               <div class="wb-root-label" id="wb-root-text">
                 目標：新規顧客獲得数の前月比200%達成
               </div>
@@ -1269,7 +1671,6 @@
         <button class="action-btn-primary" id="drawer-expand-btn" style="padding: 4px 8px; font-size: 0.8rem;" onclick="toggleDrawerExpand()">全画面展開</button>
       </div>
       <div class="drawer-body" style="padding:20px; flex:1; overflow-y:auto; background:#F8FAFC;">
-        <button class="action-btn-primary" style="width:100%; justify-content:center; margin-bottom:20px;" onclick="openAddTaskModal()">+ 新規タスク追加</button>
         <div class="drawer-task-list-container">
           <div style="margin-bottom:12px; font-weight:600; font-size:0.9rem;">未アサイン / バックログ</div>
           <div id="drawer-task-list" class="drawer-task-list" style="min-height:200px; padding-bottom:40px;">
@@ -1282,12 +1683,12 @@
             <table class="custom-table" style="width: 100%;">
               <thead>
                 <tr>
-                  <th>重点施策</th>
+                  <th>施策・プロジェクト</th>
                   <th>達成項目（タスク名）</th>
                   <th>担当</th>
                   <th>進捗状況</th>
-                  <th>進捗率</th>
-                  <th>操作</th>
+                  <th style="min-width:260px;">進捗率</th>
+                  <th>ルーティン</th>
                 </tr>
               </thead>
               <tbody id="dept-task-tbody">
@@ -1415,8 +1816,8 @@
       </div>
 
       <div class="form-group" id="group-task-initiative">
-        <label class="form-label">所属する重点施策</label>
-        <input type="text" id="modal-task-initiative" class="form-input" placeholder="例: 新規顧客獲得">
+        <label class="form-label">所属する施策・プロジェクト</label>
+        <select id="modal-task-initiative" class="form-select" onchange="handleInitiativeSelectChange()"></select>
       </div>
 
 
@@ -1526,10 +1927,12 @@
       routineTime: 'routine_time',
       parentId: 'parent_id',
       inTree: 'in_tree',
-      isApprovalRequired: 'is_approval_required'
+      isApprovalRequired: 'is_approval_required',
+      initiativeId: 'initiative_id'
     };
     // stickyColor / priority / isToday are UI-only fields with no backing column.
-    const TASK_FIELDS_LOCAL_ONLY = ['stickyColor', 'priority', 'isToday'];
+    // `initiative` (free-text) is a legacy column superseded by initiative_id; stop writing it.
+    const TASK_FIELDS_LOCAL_ONLY = ['stickyColor', 'priority', 'isToday', 'initiative'];
 
     function toDbTaskPayload(fields) {
       const payload = {};
@@ -1549,13 +1952,27 @@
         routineTime: row.routine_time,
         parentId: row.parent_id,
         inTree: row.in_tree,
-        isApprovalRequired: row.is_approval_required
+        isApprovalRequired: row.is_approval_required,
+        initiativeId: row.initiative_id
       };
+    }
+
+    // The `initiatives` table columns are snake_case; app code uses camelCase.
+    function fromDbInitiative(row) {
+      return { ...row, parentId: row.parent_id };
+    }
+    function toDbInitiativePayload(fields) {
+      const payload = {};
+      Object.keys(fields).forEach(key => {
+        payload[key === 'parentId' ? 'parent_id' : key] = fields[key];
+      });
+      return payload;
     }
 
     // Global State
     let departments = [];
     let users = [];
+    let initiatives = [];
     let currentUserId = null;
     let currentUserRole = 'manager'; // Default role as manager
     let currentUserName = '上司';
@@ -1573,6 +1990,266 @@
       });
     }
 
+    function populateInitiativeSelect(selectedId) {
+      const select = document.getElementById('modal-task-initiative');
+      if (!select) return;
+      select.innerHTML = '';
+
+      const noneOpt = document.createElement('option');
+      noneOpt.value = '';
+      noneOpt.innerText = '（施策なし・事務タスク）';
+      select.appendChild(noneOpt);
+
+      const deptInitiatives = initiatives.filter(i => i.department_id === currentDept);
+      deptInitiatives.forEach(i => {
+        const opt = document.createElement('option');
+        opt.value = i.id;
+        opt.innerText = (i.type === 'main_goal' ? '【事業部目標】' : '') + i.title;
+        select.appendChild(opt);
+      });
+      const addOpt = document.createElement('option');
+      addOpt.value = '__add_new__';
+      addOpt.innerText = '+ 新規施策(月次目標)を追加...';
+      select.appendChild(addOpt);
+
+      if (selectedId && deptInitiatives.some(i => i.id === selectedId)) {
+        select.value = selectedId;
+      } else if (selectedId === null) {
+        select.value = '';
+      } else if (deptInitiatives.length > 0) {
+        select.value = deptInitiatives[0].id;
+      }
+    }
+
+    function handleInitiativeSelectChange() {
+      const select = document.getElementById('modal-task-initiative');
+      if (select.value !== '__add_new__') return;
+
+      const title = prompt('新しい施策(月次目標)の名前を入力してください:');
+      if (!title || !title.trim()) {
+        populateInitiativeSelect();
+        return;
+      }
+
+      const newInitiative = createMonthlyGoal(title.trim());
+      autoLayoutNodes();
+      renderTopDeptCards();
+      populateInitiativeSelect(newInitiative.id);
+    }
+
+    // --- Monthly Goal (initiatives.type === 'monthly_goal') CRUD ---
+    // The only places these are edited/created/deleted from:
+    // - the top page's per-department cards (full add/edit/delete, any department)
+    // - the task modal's "+ 新規施策を追加" quick-add (scoped to currentDept)
+    // - the marker node itself on the whiteboard tree (edit/delete only —
+    //   "connected within the tree structure", no standalone add there)
+
+    function createMonthlyGoal(title, departmentId, project) {
+      const deptId = departmentId || currentDept;
+      const mainGoal = initiatives.find(i => i.department_id === deptId && i.type === 'main_goal');
+      const newInitiative = {
+        id: crypto.randomUUID(),
+        department_id: deptId,
+        type: 'monthly_goal',
+        title: title,
+        project: project || null,
+        parentId: mainGoal ? mainGoal.id : null,
+        x: null,
+        y: null
+      };
+      initiatives.push(newInitiative);
+      if (sbClient) sbClient.from('initiatives').insert([toDbInitiativePayload(newInitiative)]).then(({ error }) => { if (error) console.error(error); });
+      return newInitiative;
+    }
+
+    function addMonthlyGoalForDept(departmentId) {
+      const dept = departments.find(d => d.id === departmentId);
+      if (!dept) return;
+      const title = prompt(`「${dept.name}」に今月の目標を追加:`);
+      if (!title || !title.trim()) return;
+
+      const project = prompt('所属するプロジェクト名（任意・事業部目標の直下に置く場合は空欄のままでOK）:');
+
+      createMonthlyGoal(title.trim(), departmentId, project && project.trim() ? project.trim() : null);
+      renderTopDeptCards();
+      if (departmentId === currentDept) autoLayoutNodes();
+    }
+
+    function editMonthlyGoal(id) {
+      const goal = initiatives.find(i => i.id === id);
+      if (!goal) return;
+      const title = prompt('今月の目標を編集:', goal.title);
+      if (!title || !title.trim() || title.trim() === goal.title) return;
+
+      goal.title = title.trim();
+      if (sbClient) sbClient.from('initiatives').update(toDbInitiativePayload({ title: goal.title })).eq('id', id).then(({ error }) => { if (error) console.error(error); });
+
+      renderTopDeptCards();
+      if (goal.department_id === currentDept) renderInteractiveWhiteboard();
+    }
+
+    function deleteMonthlyGoal(id) {
+      const goal = initiatives.find(i => i.id === id);
+      if (!goal) return;
+      if (!confirm(`「${goal.title}」を削除しますか？`)) return;
+
+      const linkedTasks = tasks.filter(t => t.initiativeId === id);
+      let deleteLinkedTasks = false;
+      if (linkedTasks.length > 0) {
+        deleteLinkedTasks = confirm(
+          `このイニシアチブには${linkedTasks.length}件のタスクが紐づいています。\n` +
+          `関連するタスクも一緒に削除しますか？\n\n` +
+          `「OK」: タスクも削除する\n「キャンセル」: タスクは残し、施策の紐付けだけ解除する`
+        );
+      }
+
+      initiatives = initiatives.filter(i => i.id !== id);
+
+      if (deleteLinkedTasks) {
+        tasks = tasks.filter(t => t.initiativeId !== id);
+        linkedTasks.forEach(t => {
+          if (sbClient) sbClient.from('tasks').delete().eq('id', t.id).then(({ error }) => { if (error) console.error(error); });
+        });
+      } else {
+        tasks.forEach(t => { if (t.initiativeId === id) t.initiativeId = null; });
+      }
+
+      if (sbClient) sbClient.from('initiatives').delete().eq('id', id).then(({ error }) => { if (error) console.error(error); });
+
+      renderTopDeptCards();
+      if (goal.department_id === currentDept) autoLayoutNodes();
+      renderAllViews();
+    }
+
+    // --- Department finance figures (total_sales / total_investment) ---
+    let editingDeptFinanceId = null;
+
+    function formatCurrencyJpy(value) {
+      return '¥' + Number(value || 0).toLocaleString('ja-JP');
+    }
+
+    function toggleDeptFinanceEdit(departmentId) {
+      editingDeptFinanceId = (editingDeptFinanceId === departmentId) ? null : departmentId;
+      renderTopDeptCards();
+    }
+
+    function saveDeptFinance(departmentId) {
+      const dept = departments.find(d => d.id === departmentId);
+      if (!dept) return;
+
+      const salesInput = document.getElementById(`finance-sales-${departmentId}`);
+      const investmentInput = document.getElementById(`finance-investment-${departmentId}`);
+      const totalSales = Number(salesInput.value) || 0;
+      const totalInvestment = Number(investmentInput.value) || 0;
+
+      dept.total_sales = totalSales;
+      dept.total_investment = totalInvestment;
+      if (sbClient) sbClient.from('departments').update({ total_sales: totalSales, total_investment: totalInvestment }).eq('id', departmentId).then(({ error }) => { if (error) console.error(error); });
+
+      editingDeptFinanceId = null;
+      renderTopDeptCards();
+    }
+
+    // --- Department cards on the top page: main_goal + monthly_goal, full CRUD ---
+    // Editable by anyone regardless of the logged-in user's own department/role.
+    // The dept-detail page only shows the whiteboard tree; editing there happens
+    // through the tree itself (marker node's own edit/delete buttons), not a
+    // separate list.
+    function renderTopDeptCards() {
+      const grid = document.getElementById('top-maingoal-grid');
+      if (!grid) return;
+
+      grid.innerHTML = departments.map(d => {
+        const mainGoal = initiatives.find(i => i.department_id === d.id && i.type === 'main_goal');
+        const monthlyGoals = initiatives.filter(i => i.department_id === d.id && i.type === 'monthly_goal');
+
+        const chips = monthlyGoals.map(g => `
+          <div class="top-dept-monthly-chip">
+            <span>${g.title}</span>
+            <button class="chip-edit" onclick="editMonthlyGoal('${g.id}')" title="編集">✎</button>
+            <button class="chip-delete" onclick="deleteMonthlyGoal('${g.id}')" title="削除">✕</button>
+          </div>
+        `).join('') || '<span class="top-dept-monthly-empty">まだありません</span>';
+
+        const isEditingFinance = editingDeptFinanceId === d.id;
+        const financeHtml = isEditingFinance ? `
+          <div class="top-dept-finance-edit">
+            <label>累計売上 (円)
+              <input type="number" id="finance-sales-${d.id}" value="${d.total_sales || 0}">
+            </label>
+            <label>累計投資額 (円)
+              <input type="number" id="finance-investment-${d.id}" value="${d.total_investment || 0}">
+            </label>
+            <div class="top-dept-finance-edit-actions">
+              <button class="top-dept-finance-save-btn" onclick="saveDeptFinance('${d.id}')">保存</button>
+              <button class="top-dept-finance-cancel-btn" onclick="toggleDeptFinanceEdit('${d.id}')">キャンセル</button>
+            </div>
+          </div>
+        ` : `
+          <div class="top-dept-finance-view">
+            <div class="top-dept-finance-item">
+              <span class="top-dept-finance-label">累計売上</span>
+              <span class="top-dept-finance-value">${formatCurrencyJpy(d.total_sales)}</span>
+            </div>
+            <div class="top-dept-finance-item">
+              <span class="top-dept-finance-label">累計投資額</span>
+              <span class="top-dept-finance-value">${formatCurrencyJpy(d.total_investment)}</span>
+            </div>
+            <button class="top-dept-finance-edit-btn" onclick="toggleDeptFinanceEdit('${d.id}')">✎ 編集</button>
+          </div>
+        `;
+
+        return `
+          <div class="top-maingoal-card">
+            <div class="top-maingoal-dept">${d.name}</div>
+            <div class="top-maingoal-text">${mainGoal ? mainGoal.title : '未設定'}</div>
+            <button class="top-maingoal-edit-btn" onclick="editMainGoal('${d.id}')">✎ 事業部目標を編集</button>
+            <div class="top-dept-monthly-divider">
+              <div class="top-dept-monthly-title">
+                <span>今月の目標</span>
+                <button class="top-dept-monthly-add-btn" onclick="addMonthlyGoalForDept('${d.id}')">+ 追加</button>
+              </div>
+              <div class="top-dept-monthly-list">${chips}</div>
+            </div>
+            <div class="top-dept-finance-divider">
+              <div class="top-dept-finance-title">💰 財務データ</div>
+              ${financeHtml}
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function editMainGoal(departmentId) {
+      const dept = departments.find(d => d.id === departmentId);
+      if (!dept) return;
+      let goal = initiatives.find(i => i.department_id === departmentId && i.type === 'main_goal');
+
+      const title = prompt(`「${dept.name}」の事業部目標を編集:`, goal ? goal.title : '');
+      if (title === null) return;
+      const trimmed = title.trim();
+      if (!trimmed) return;
+
+      if (goal) {
+        goal.title = trimmed;
+        if (sbClient) sbClient.from('initiatives').update(toDbInitiativePayload({ title: trimmed })).eq('id', goal.id).then(({ error }) => { if (error) console.error(error); });
+      } else {
+        goal = { id: crypto.randomUUID(), department_id: departmentId, type: 'main_goal', title: trimmed, parentId: null, x: 700, y: 40 };
+        initiatives.push(goal);
+        if (sbClient) sbClient.from('initiatives').insert([toDbInitiativePayload(goal)]).then(({ error }) => { if (error) console.error(error); });
+      }
+
+      renderTopDeptCards();
+      if (departmentId === currentDept) {
+        const rootText = document.getElementById('wb-root-text');
+        if (rootText) rootText.innerText = goal.title;
+      }
+    }
+
+    function userOptionLabel(u) {
+      return `${u.role === 'manager' ? '管理者' : '学生'} (${u.name})`;
+    }
+
     function initUserSelect() {
       const select = document.getElementById('user-role-select');
       if(!select) return;
@@ -1580,14 +2257,37 @@
       users.forEach(u => {
         const opt = document.createElement('option');
         opt.value = u.id;
-        opt.innerText = `${u.role === 'manager' ? '管理者' : '学生'} (${u.name})`;
+        opt.innerText = userOptionLabel(u);
         select.appendChild(opt);
       });
       initAssigneeSelect();
-      if(users.length > 0) {
-        select.value = users[0].id;
-        changeUserRole();
-      }
+      if(users.length > 0) select.value = users[0].id;
+      // Actual login (setting currentUserId etc.) happens via the mandatory
+      // login overlay (performLogin), not automatically here.
+    }
+
+    function initLoginOverlay() {
+      const select = document.getElementById('login-user-select');
+      if (!select) return;
+      select.innerHTML = '';
+      users.forEach(u => {
+        const opt = document.createElement('option');
+        opt.value = u.id;
+        opt.innerText = userOptionLabel(u);
+        select.appendChild(opt);
+      });
+      if (users.length > 0) select.value = users[0].id;
+    }
+
+    function performLogin() {
+      const select = document.getElementById('login-user-select');
+      if (!select || !select.value) return;
+
+      document.getElementById('user-role-select').value = select.value;
+      changeUserRole();
+
+      const overlay = document.getElementById('login-overlay');
+      if (overlay) overlay.classList.add('hidden');
     }
 
     function changeUserRole() {
@@ -1599,13 +2299,27 @@
         currentUserRole = user.role;
         currentUserName = user.name;
         avatarEl.innerText = user.name.charAt(0);
-        
+
         const memberTab = document.getElementById('nav-members-tab');
         if (memberTab) {
           memberTab.style.display = (currentUserRole === 'manager') ? 'inline-flex' : 'none';
         }
+
+        // Students are locked to their own department; managers can switch freely.
+        const deptBar = document.querySelector('.dept-selector-bar');
+        if (currentUserRole === 'manager') {
+          if (deptBar) deptBar.style.display = 'flex';
+          if (!currentDept && departments.length > 0) currentDept = departments[0].id;
+        } else {
+          currentDept = user.department_id;
+          if (deptBar) deptBar.style.display = 'none';
+        }
+        initDeptTabs();
       }
-      renderAllViews();
+      if (currentDept) selectDepartment(currentDept);
+      else renderAllViews();
+
+      if (typeof currentCalendarDate === 'string') loadScheduledTasksForDate(currentCalendarDate);
     }
     let currentDept = null;
     let currentStatusFilterInModal = 'in-progress';
@@ -1627,13 +2341,6 @@
     
     let initialDraggedPos = { x: 0, y: 0 };
     let initialDescendantPositions = {}; // childId -> {x, y}
-
-    // Initiative Positions State (Draggable Marker Headers)
-    let initiativePositions = [
-      { init: 'アタックリストの精度向上', x: 260, y: 170 },
-      { init: '商談化率の改善', x: 700, y: 170 },
-      { init: 'インターン教育フロー確立', x: 1140, y: 170 }
-    ];
 
     // Branching Tree Tasks Data Structure
     let tasks = [];
@@ -1662,13 +2369,12 @@
     const { data: tData, error: tErr } = await sbQuery(() => sbClient.from('tasks').select('*'));
         if (!tErr && tData && tData.length > 0) tasks = tData.map(fromDbTask);
 
-        const { data: sData, error: sErr } = await sbQuery(() => sbClient.from('scheduled_tasks').select('*'));
-        if (!sErr && sData) {
-          sData.forEach(st => {
-            if (!window.scheduledTasks[st.date]) window.scheduledTasks[st.date] = [];
-            window.scheduledTasks[st.date].push(st);
-          });
-        }
+        const { data: iData, error: iErr } = await sbQuery(() => sbClient.from('initiatives').select('*'));
+        if (!iErr && iData && iData.length > 0) initiatives = iData.map(fromDbInitiative);
+
+        // scheduled_tasks is loaded per date+user once a user/date is known
+        // (see loadScheduledTasksForDate, called from changeUserRole and
+        // openTimetablePopout) rather than fetched wholesale here.
       } catch (e) {
         console.error('Supabase init load error:', e);
       }
@@ -1678,21 +2384,21 @@
       // so mixing them in would leave every demo task pointing at a nonexistent dept/assignee.
       if (tasks.length === 0 && !(departmentsFromDb && usersFromDb)) {
         tasks = [
-          { id: 'mock-1', department_id: '11111111-1111-1111-1111-111111111111', initiative: 'アタックリストの精度向上', title: 'ターゲット企業50社のリストアップ', assignee_id: '66666666-6666-6666-6666-666666666666', status: 'completed', progress: 100, stickyColor: 'sticky-yellow', isRoutine: false, isToday: true, priority: 'high', x: 320, y: 280, parentId: null },
-          { id: 'mock-2', department_id: '11111111-1111-1111-1111-111111111111', initiative: 'アタックリストの精度向上', title: '業界データベース自動抽出ツールの検証', assignee_id: '77777777-7777-7777-7777-777777777777', status: 'in-progress', progress: 40, stickyColor: 'sticky-blue', isRoutine: false, isToday: false, priority: 'mid', x: 320, y: 490, parentId: 'mock-1' },
-          { id: 'mock-3', department_id: '11111111-1111-1111-1111-111111111111', initiative: '商談化率の改善', title: '提案用スライド資料のテンプレート改訂', assignee_id: '77777777-7777-7777-7777-777777777777', status: 'sixty', progress: 60, stickyColor: 'sticky-purple', isRoutine: false, isToday: true, priority: 'mid', x: 700, y: 280, parentId: null },
-          { id: 'mock-4', department_id: '11111111-1111-1111-1111-111111111111', initiative: '商談化率の改善', title: 'ヒアリングシートのフォーマット標準化', assignee: '佐藤 健', status: 'in-progress', progress: 30, stickyColor: 'sticky-blue', isRoutine: false, isToday: false, priority: 'mid', x: 700, y: 490, parentId: 'mock-3' },
-          { id: 'mock-5', department_id: '11111111-1111-1111-1111-111111111111', initiative: 'インターン教育フロー確立', title: '週次振り返りミーティング用テンプレート作成', assignee_id: '66666666-6666-6666-6666-666666666666', status: 'unstarted', progress: 0, stickyColor: 'sticky-yellow', isRoutine: true, isToday: false, priority: 'low', x: 1140, y: 280, parentId: null },
-          { id: 'mock-6', department_id: '33333333-3333-3333-3333-333333333333', initiative: 'SNSリード獲得キャンペーン', title: 'X/LinkedIn投稿クリエイティブの制作', assignee: '高橋 涼', status: 'submitted', progress: 90, stickyColor: 'sticky-yellow', isRoutine: false, isToday: true, priority: 'high', x: 700, y: 280, parentId: null }
+          { id: 'mock-1', department_id: '11111111-1111-1111-1111-111111111111', initiativeId: 'mock-init-1', title: 'ターゲット企業50社のリストアップ', assignee_id: '66666666-6666-6666-6666-666666666666', status: 'completed', progress: 100, stickyColor: 'sticky-yellow', isRoutine: false, isToday: true, priority: 'high', x: 320, y: 280, parentId: null },
+          { id: 'mock-2', department_id: '11111111-1111-1111-1111-111111111111', initiativeId: 'mock-init-1', title: '業界データベース自動抽出ツールの検証', assignee_id: '77777777-7777-7777-7777-777777777777', status: 'in-progress', progress: 40, stickyColor: 'sticky-blue', isRoutine: false, isToday: false, priority: 'mid', x: 320, y: 490, parentId: 'mock-1' },
+          { id: 'mock-3', department_id: '11111111-1111-1111-1111-111111111111', initiativeId: 'mock-init-2', title: '提案用スライド資料のテンプレート改訂', assignee_id: '77777777-7777-7777-7777-777777777777', status: 'sixty', progress: 60, stickyColor: 'sticky-purple', isRoutine: false, isToday: true, priority: 'mid', x: 700, y: 280, parentId: null },
+          { id: 'mock-4', department_id: '11111111-1111-1111-1111-111111111111', initiativeId: 'mock-init-2', title: 'ヒアリングシートのフォーマット標準化', assignee: '佐藤 健', status: 'in-progress', progress: 30, stickyColor: 'sticky-blue', isRoutine: false, isToday: false, priority: 'mid', x: 700, y: 490, parentId: 'mock-3' },
+          { id: 'mock-5', department_id: '11111111-1111-1111-1111-111111111111', initiativeId: 'mock-init-3', title: '週次振り返りミーティング用テンプレート作成', assignee_id: '66666666-6666-6666-6666-666666666666', status: 'unstarted', progress: 0, stickyColor: 'sticky-yellow', isRoutine: true, isToday: false, priority: 'low', x: 1140, y: 280, parentId: null },
+          { id: 'mock-6', department_id: '33333333-3333-3333-3333-333333333333', initiativeId: 'mock-init-4', title: 'X/LinkedIn投稿クリエイティブの制作', assignee: '高橋 涼', status: 'submitted', progress: 90, stickyColor: 'sticky-yellow', isRoutine: false, isToday: true, priority: 'high', x: 700, y: 280, parentId: null }
         ];
       }
       
           if (departments.length === 0) {
       departments = [
-        { id: '11111111-1111-1111-1111-111111111111', name: '営業事業部' },
-        { id: '22222222-2222-2222-2222-222222222222', name: '開発事業部' },
-        { id: '33333333-3333-3333-3333-333333333333', name: 'マーケティング事業部' },
-        { id: '44444444-4444-4444-4444-444444444444', name: '全事業部' }
+        { id: '11111111-1111-1111-1111-111111111111', name: '営業事業部', total_sales: 12500000, total_investment: 4000000 },
+        { id: '22222222-2222-2222-2222-222222222222', name: '開発事業部', total_sales: 0, total_investment: 8000000 },
+        { id: '33333333-3333-3333-3333-333333333333', name: 'マーケティング事業部', total_sales: 3200000, total_investment: 2100000 },
+        { id: '44444444-4444-4444-4444-444444444444', name: '全事業部', total_sales: 0, total_investment: 0 }
       ];
     }
 
@@ -1704,12 +2410,25 @@
       ];
     }
 
+    if (initiatives.length === 0 && !(departmentsFromDb && usersFromDb)) {
+      initiatives = [
+        { id: 'mock-main-1', department_id: '11111111-1111-1111-1111-111111111111', type: 'main_goal', title: '新規顧客獲得数の前月比200%達成', parentId: null, x: 700, y: 40 },
+        { id: 'mock-init-1', department_id: '11111111-1111-1111-1111-111111111111', type: 'monthly_goal', title: 'アタックリストの精度向上', parentId: 'mock-main-1', x: 260, y: 170 },
+        { id: 'mock-init-2', department_id: '11111111-1111-1111-1111-111111111111', type: 'monthly_goal', title: '商談化率の改善', parentId: 'mock-main-1', x: 700, y: 170 },
+        { id: 'mock-init-3', department_id: '11111111-1111-1111-1111-111111111111', type: 'monthly_goal', title: 'インターン教育フロー確立', parentId: 'mock-main-1', x: 1140, y: 170 },
+        { id: 'mock-main-2', department_id: '33333333-3333-3333-3333-333333333333', type: 'main_goal', title: 'マーケティング事業部の目標', parentId: null, x: 700, y: 40 },
+        { id: 'mock-init-4', department_id: '33333333-3333-3333-3333-333333333333', type: 'monthly_goal', title: 'SNSリード獲得キャンペーン', parentId: 'mock-main-2', x: 700, y: 170 }
+      ];
+    }
+
         if (departments.length > 0 && !currentDept) {
       currentDept = departments[0].id;
     }
     initDeptTabs();
     initDeptSelect();
+    initTopTaskDeptFilter();
     initUserSelect();
+    initLoginOverlay();
     initAssigneeSelect();
     renderAllViews();
     autoLayoutNodes();
@@ -1726,9 +2445,36 @@
       panX = (vWidth / 2) - (700 * zoomScale);
       panY = 40; // Small top padding
 
-      
+      // Two-finger pinch to zoom (touch panels)
+      let pinchStartDistance = null;
+      let pinchStartScale = 1;
 
-      
+      const touchDistance = (touches) => {
+        const dx = touches[0].clientX - touches[1].clientX;
+        const dy = touches[0].clientY - touches[1].clientY;
+        return Math.sqrt(dx * dx + dy * dy);
+      };
+
+      viewport.addEventListener('touchstart', (e) => {
+        if (e.touches.length === 2) {
+          pinchStartDistance = touchDistance(e.touches);
+          pinchStartScale = zoomScale;
+        }
+      }, { passive: true });
+
+      viewport.addEventListener('touchmove', (e) => {
+        if (e.touches.length === 2 && pinchStartDistance) {
+          e.preventDefault();
+          const newDistance = touchDistance(e.touches);
+          const scaleFactor = newDistance / pinchStartDistance;
+          zoomScale = Math.min(2.2, Math.max(0.4, pinchStartScale * scaleFactor));
+          updateTransform();
+        }
+      }, { passive: false });
+
+      viewport.addEventListener('touchend', (e) => {
+        if (e.touches.length < 2) pinchStartDistance = null;
+      });
 
       window.addEventListener('mousemove', (e) => {
         if (dragType === 'task' && dragNodeId) {
@@ -1772,7 +2518,7 @@
           const deltaX = (e.clientX - mouseStartX) / zoomScale;
           const deltaY = (e.clientY - mouseStartY) / zoomScale;
 
-          const mPos = initiativePositions.find(m => m.init === dragMarkerInit);
+          const mPos = initiatives.find(i => i.id === dragMarkerInit);
           if (mPos) {
             mPos.x = Math.round(initialDraggedPos.x + deltaX);
             mPos.y = Math.round(initialDraggedPos.y + deltaY);
@@ -1814,6 +2560,7 @@
         if (dragType) {
           const finishedDragType = dragType;
           const finishedDragNodeId = dragNodeId;
+          const finishedDragMarkerInit = dragMarkerInit;
           const finishedDescendantPositions = initialDescendantPositions;
 
           // Reset drag state immediately so a persistence error below can never
@@ -1831,7 +2578,9 @@
                   const child = tasks.find(t => t.id === cId);
                   if (child) sbClient.from('tasks').update({x: child.x, y: child.y}).eq('id', child.id).then(({ error }) => { if (error) console.error(error); });
                 });
-              } else if (finishedDragType === 'marker') {
+              } else if (finishedDragType === 'marker' && finishedDragMarkerInit) {
+                const init = initiatives.find(i => i.id === finishedDragMarkerInit);
+                if (init) sbClient.from('initiatives').update(toDbInitiativePayload({x: init.x, y: init.y})).eq('id', init.id).then(({ error }) => { if (error) console.error(error); });
                 Object.keys(finishedDescendantPositions).forEach(tId => {
                   const child = tasks.find(t => t.id === tId);
                   if (child) sbClient.from('tasks').update({x: child.x, y: child.y}).eq('id', child.id).then(({ error }) => { if (error) console.error(error); });
@@ -1886,29 +2635,37 @@
     // Multi-branching Auto-Arrange Tree Layout Algorithm
     function autoLayoutNodes() {
       const deptTasks = getVisibleTasks('whiteboard').filter(t => t.department_id === currentDept);
-      const initiatives = Array.from(new Set(deptTasks.map(t => t.initiative)));
 
-      if (initiatives.length === 0) return;
+      // Independent tasks (no parent, no initiative) stack inside the 事務タスク zone.
+      const orphanTasks = deptTasks.filter(t => !t.parentId && !t.initiativeId);
+      orphanTasks.forEach((t, idx) => {
+        t.x = 60;
+        t.y = 90 + idx * 100;
+      });
 
-      const totalCols = initiatives.length;
+      const monthlyGoals = initiatives.filter(i => i.department_id === currentDept && i.type === 'monthly_goal');
+
+      if (monthlyGoals.length === 0) {
+        renderInteractiveWhiteboard();
+        return;
+      }
+
+      const totalCols = monthlyGoals.length;
       const colWidth = 460;
       const startX = 700 - ((totalCols - 1) * colWidth) / 2;
 
-      initiatives.forEach((init, initIdx) => {
+      monthlyGoals.forEach((init, initIdx) => {
         const posX = startX + initIdx * colWidth;
 
-        // Position Marker Data & DOM
-        let mPos = initiativePositions.find(m => m.init === init);
-        if (!mPos) {
-          mPos = { init: init, x: posX - 100, y: 170 };
-          initiativePositions.push(mPos);
-        } else {
-          mPos.x = posX - 100;
-          mPos.y = 170;
+        // Marker position: only auto-place initiatives that don't already have a
+        // saved position (e.g. freshly created ones); dragged/persisted ones keep theirs.
+        if (init.x == null || init.y == null) {
+          init.x = posX - 100;
+          init.y = 170;
         }
 
         // Position Level 1 Tasks
-        const level1Tasks = deptTasks.filter(t => t.initiative === init && !t.parentId);
+        const level1Tasks = deptTasks.filter(t => t.initiativeId === init.id && !t.parentId);
         const l1Count = level1Tasks.length;
         const l1Spacing = 260;
 
@@ -1936,14 +2693,14 @@
     function getVisibleTasks(viewName) {
       return tasks.filter(t => {
         const isPersonal = (t.type === 'personal');
-        if (currentUserRole === 'manager') {
-          if (isPersonal) return false;
-          return true;
-        } else if (currentUserRole === 'student') {
-          if (t.assignee !== currentUserName) return false;
-          if (viewName === 'whiteboard' && isPersonal) return false;
-          return true;
+        if (isPersonal) {
+          // Personal tasks never appear on the shared department tree — only in
+          // their assignee's own task list / schedule.
+          if (viewName === 'whiteboard') return false;
+          return t.assignee_id === currentUserId;
         }
+        // Business tasks are visible department-wide; department scoping itself
+        // is applied by each call site via `.filter(t => t.department_id === currentDept)`.
         return true;
       });
     }
@@ -1960,6 +2717,15 @@
         opt.innerText = d.name;
         select.appendChild(opt);
       });
+    }
+
+    function initTopTaskDeptFilter() {
+      const select = document.getElementById('top-task-dept-filter');
+      if (!select) return;
+      const current = select.value;
+      select.innerHTML = '<option value="all">すべての事業部</option>' +
+        departments.map(d => `<option value="${d.id}">${d.name}</option>`).join('');
+      if (current && Array.from(select.options).some(o => o.value === current)) select.value = current;
     }
 
     function renderMembersList() {
@@ -2079,13 +2845,13 @@
     }
 
     function renderAllViews() {
-      renderTopPageTable();
-      renderInteractiveWhiteboard();
-      renderDeptListView();
-      renderCalendar();
-      renderMembersList();
-      renderTimetable();
-      renderDrawerTasks();
+      // Each view renders independently — one view throwing must never
+      // prevent the rest from rendering (this previously meant a single
+      // failing renderer could leave every view after it in the list blank).
+      [renderTopPageTable, renderTopDeptCards, renderInteractiveWhiteboard, renderDeptListView, renderCalendar, renderMembersList, renderTimetable, renderDrawerTasks]
+        .forEach(renderFn => {
+          try { renderFn(); } catch (e) { console.error(`renderAllViews: ${renderFn.name} failed`, e); }
+        });
     }
 
     function switchNav(sectionId, btn) {
@@ -2138,10 +2904,9 @@
       
       const deptObj = departments.find(d => d.id === departmentId);
       const deptName = deptObj ? deptObj.name : '';
-      const titleEl = document.getElementById('dept-goal-title');
-      if (titleEl) titleEl.innerText = titleMap[deptName] || `【${deptName}】の目標`;
+      const mainGoal = initiatives.find(i => i.department_id === departmentId && i.type === 'main_goal');
       const rootText = document.getElementById('wb-root-text');
-      if(rootText) rootText.innerText = `目標: ${titleMap[deptName] ? titleMap[deptName].replace(/[【】]/g, '') : deptName}`;
+      if(rootText) rootText.innerText = mainGoal ? mainGoal.title : `【${deptName}】の目標は未設定です`;
       renderAllViews();
       autoLayoutNodes();
     }
@@ -2161,15 +2926,43 @@
     let currentCalendarDate = new Date();
     window.scheduledTasks = window.scheduledTasks || {};
 
+    function fromDbScheduledTask(row) {
+      return { ...row, userId: row.user_id, taskId: row.task_id };
+    }
+
+    // Scheduled tasks are scoped to a single date + the logged-in user, so
+    // they're (re)loaded from Supabase whenever either one changes, rather
+    // than fetched wholesale up front.
+    async function loadScheduledTasksForDate(dateStr) {
+      if (!dateStr || typeof dateStr !== 'string') return;
+      if (!sbClient || !currentUserId) {
+        if (!window.scheduledTasks[dateStr]) window.scheduledTasks[dateStr] = [];
+        renderTimetable();
+        return;
+      }
+
+      const { data, error } = await sbQuery(() =>
+        sbClient.from('scheduled_tasks').select('*').eq('date', dateStr).eq('user_id', currentUserId)
+      );
+      if (error) {
+        console.error(error);
+        if (!window.scheduledTasks[dateStr]) window.scheduledTasks[dateStr] = [];
+      } else {
+        window.scheduledTasks[dateStr] = (data || []).map(fromDbScheduledTask);
+      }
+      if (dateStr === currentCalendarDate) renderTimetable();
+    }
+
     function renderCalendar() {
       const timeline = document.getElementById('calendar-timeline');
       if (!timeline) return;
       timeline.innerHTML = '';
 
       const today = new Date();
-      for (let i = 0; i < 14; i++) {
+      for (let i = -1; i < 13; i++) {
         const d = new Date(today);
         d.setDate(today.getDate() + i);
+        const isToday = i === 0;
         const dateStr = `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`;
         
         const dayTasks = getVisibleTasks('calendar').filter(t => t.deadline === dateStr);
@@ -2193,7 +2986,7 @@
         node.className = 'timeline-node';
         node.innerHTML = `
           <div class="timeline-date" onclick="openTimetablePopout('${dateStr}')">
-            <div class="timeline-dot"></div>
+            <div class="timeline-dot ${isToday ? 'today' : ''}"></div>
             <div class="timeline-date-text">${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}</div>
           </div>
           <div class="timeline-tasks">
@@ -2208,12 +3001,11 @@
       document.getElementById('popout-date-title').innerText = `${dateStr} のタイムテーブル`;
       document.getElementById('calendar-timetable-popout').classList.add('active');
       currentCalendarDate = dateStr;
-      
-      if (!window.scheduledTasks[dateStr]) {
-        window.scheduledTasks[dateStr] = [];
-      }
-      
+
+      if (!window.scheduledTasks[dateStr]) window.scheduledTasks[dateStr] = [];
       renderTimetable();
+
+      loadScheduledTasksForDate(dateStr);
     }
 
     function closeTimetablePopout() {
@@ -2292,8 +3084,11 @@
         newDuration = Math.round(newDuration / 15) * 15; // snap to 15m
         
         const taskObj = window.scheduledTasks[currentCalendarDate].find(t => t.id === resizingTaskId);
-        if(taskObj) taskObj.duration = newDuration;
-        
+        if(taskObj) {
+          taskObj.duration = newDuration;
+          if(sbClient) sbClient.from('scheduled_tasks').update({ duration: newDuration }).eq('id', resizingTaskId).then(({ error }) => { if (error) console.error(error); });
+        }
+
         isResizingTask = false;
         resizingTaskId = null;
         renderTimetable();
@@ -2316,18 +3111,19 @@
             const h = Math.floor(totalMins / 60);
             const m = totalMins % 60;
             
-            const newId = 'sched-' + Date.now();
+            const newId = crypto.randomUUID();
             if(!window.scheduledTasks[currentCalendarDate]) window.scheduledTasks[currentCalendarDate] = [];
             const st = {
               id: newId,
-              originalId: null,
+              userId: currentUserId,
+              taskId: null,
               date: currentCalendarDate,
-              title: '新規タスク',
+              title: '新規予定',
               h, m, duration: durationMins,
               completed: false
             };
             window.scheduledTasks[currentCalendarDate].push(st);
-            if(sbClient) sbClient.from('scheduled_tasks').insert([{ id: st.id, original_id: st.originalId, date: st.date, title: st.title, h: st.h, m: st.m, duration: st.duration, completed: st.completed }]).then(({ error }) => { if (error) console.error(error); });
+            if(sbClient) sbClient.from('scheduled_tasks').insert([{ id: st.id, user_id: st.userId, task_id: st.taskId, date: st.date, title: st.title, h: st.h, m: st.m, duration: st.duration, completed: st.completed }]).then(({ error }) => { if (error) console.error(error); });
             renderTimetable();
             
             setTimeout(() => {
@@ -2347,8 +3143,9 @@
       const tbody = document.getElementById('top-task-tbody');
       tbody.innerHTML = '';
 
-      // filter business tasks only
-      const businessTasks = getVisibleTasks('default').filter(t => t.type !== 'personal');
+      // filter business tasks only, optionally scoped to one department
+      const deptFilter = document.getElementById('top-task-dept-filter')?.value || 'all';
+      const businessTasks = getVisibleTasks('default').filter(t => t.type !== 'personal' && (deptFilter === 'all' || t.department_id === deptFilter));
 
       const sorted = [...businessTasks].sort((a, b) => {
         if (a.status === 'submitted' && b.status !== 'submitted') return -1;
@@ -2386,12 +3183,16 @@
           <td>${users.find(u => u.id === t.assignee_id)?.name || ''}</td>
           <td><span class="status-badge ${isRevising ? '' : st.class}" style="${isRevising ? 'background:#FEE2E2; color:#DC2626;' : ''}">${isRevising ? '修正中' : st.label}</span></td>
           <td>
-            ${isRevising ? '<span style="color:#DC2626; font-weight:bold;">修正中</span>' : 
-            `<div style="display:flex; align-items:center; gap:8px;">
-              <div style="width:70px; height:6px; background:#E2E8F0; border-radius:10px; overflow:hidden;">
-                <div style="width:${t.progress}%; height:100%; background:${st.color};"></div>
+            ${isRevising ? '<span style="color:#DC2626; font-weight:bold;">修正中</span>' :
+            `<div class="inline-progress-cell" style="display:flex; align-items:center; gap:10px; min-width:240px;">
+              <div class="inline-progress-track" style="flex:1; height:8px; background:#E2E8F0; border-radius:10px; overflow:hidden;">
+                <div class="inline-progress-fill" style="width:${t.progress}%; height:100%; background:${st.color};"></div>
               </div>
-              <span style="font-weight:600; font-size:0.8rem;">${t.progress}%</span>
+              <input type="range" min="0" max="100" step="5" value="${t.progress}"
+                oninput="this.closest('.inline-progress-cell').querySelector('.inline-progress-fill').style.width = this.value + '%'; this.closest('.inline-progress-cell').querySelector('.inline-progress-pct').innerText = this.value + '%';"
+                onchange="updateTaskProgressInline('${t.id}', this.value)"
+                style="width:120px;" />
+              <span class="inline-progress-pct" style="min-width:34px; text-align:right; font-weight:600; font-size:0.8rem;">${t.progress}%</span>
             </div>` }
           </td>
           <td>${actionHtml}</td>
@@ -2426,44 +3227,41 @@
       container.innerHTML = '';
 
       const deptTasks = getVisibleTasks('whiteboard').filter(t => t.department_id === currentDept && t.inTree !== false);
-      const initiatives = Array.from(new Set(deptTasks.map(t => t.initiative)));
+      const monthlyGoals = initiatives.filter(i => i.department_id === currentDept && i.type === 'monthly_goal');
 
-      if (initiatives.length === 0) {
-        initiatives.push('アタックリストの精度向上', '商談化率の改善');
-      }
-
-      // Render Draggable Marker Headers for Key Initiatives
-      initiatives.forEach((init, idx) => {
-        let mPos = initiativePositions.find(m => m.init === init);
-        if (!mPos) {
-          mPos = { init: init, x: 260 + idx * 440, y: 170 };
-          initiativePositions.push(mPos);
+      // Render Draggable Marker Headers for Monthly Goal Initiatives
+      monthlyGoals.forEach((init, idx) => {
+        if (init.x == null || init.y == null) {
+          init.x = 260 + idx * 440;
+          init.y = 170;
         }
 
         const mDiv = document.createElement('div');
         mDiv.className = 'wb-marker-node';
-        mDiv.id = `wb-marker-${idx}`;
-        mDiv.style.left = mPos.x + 'px';
-        mDiv.style.top = mPos.y + 'px';
-        mDiv.setAttribute('data-init', init);
+        mDiv.id = `wb-marker-${init.id}`;
+        mDiv.style.left = init.x + 'px';
+        mDiv.style.top = init.y + 'px';
+        mDiv.setAttribute('data-init', init.id);
         mDiv.innerHTML = `
-          <div class="wb-marker-title">施策: ${init}</div>
+          <div class="wb-marker-title">施策: ${init.title}</div>
           <div class="sticky-actions-container">
-            <div class="sticky-icon-btn" title="最上位タスク追加" onclick="event.stopPropagation(); window.pendingParentId=null; window.pendingBranchX=${mPos.x + 200}; window.pendingBranchY=${mPos.y + 100}; openAddTaskForInitiative('${init.replace(/\\/g, '\\\\').replace(/'/g, "\\\\'")}')">+</div>
+            <div class="sticky-icon-btn" title="編集" onclick="event.stopPropagation(); editMonthlyGoal('${init.id}')">✎</div>
+            <div class="sticky-icon-btn" title="削除" onclick="event.stopPropagation(); deleteMonthlyGoal('${init.id}')">✕</div>
+            <div class="sticky-icon-btn" title="最上位タスク追加" onclick="event.stopPropagation(); window.pendingParentId=null; window.pendingBranchX=${init.x + 200}; window.pendingBranchY=${init.y + 100}; openAddTaskForInitiative('${init.id}')">+</div>
           </div>
         `;
 
         // Marker Header Group Drag Handler
         mDiv.addEventListener('mousedown', (e) => {
           dragType = 'marker';
-          dragMarkerInit = init;
+          dragMarkerInit = init.id;
           mouseStartX = e.clientX;
           mouseStartY = e.clientY;
-          initialDraggedPos = { x: mPos.x, y: mPos.y };
+          initialDraggedPos = { x: init.x, y: init.y };
 
           // Record initial positions of all tasks in this initiative for group move
           initialDescendantPositions = {};
-          deptTasks.filter(t => t.initiative === init).forEach(t => {
+          deptTasks.filter(t => t.initiativeId === init.id).forEach(t => {
             initialDescendantPositions[t.id] = { x: t.x, y: t.y };
           });
           e.stopPropagation();
@@ -2505,7 +3303,6 @@
         note.style.border = `1.5px solid ${borderColor}`;
         note.style.color = '#1e293b';
 
-        const safeInit = (t.initiative || '').replace(/\\/g, '\\\\').replace(/'/g, "\\\\'");
         note.innerHTML = `
           <div class="sticky-title" onclick="openEditTaskModal('${t.id}')">${t.title}</div>
           <div class="sticky-meta">
@@ -2514,7 +3311,7 @@
           </div>
           <div class="sticky-actions-container">
             <div class="sticky-icon-btn split-btn" title="タスク分解" onclick="event.stopPropagation(); openSplitModal('${t.id}')">✂</div>
-            <div class="sticky-icon-btn" title="分岐追加" onclick="event.stopPropagation(); window.pendingParentId='${t.id}'; window.pendingBranchX=${t.x + 200}; window.pendingBranchY=${t.y + 160}; openAddTaskForInitiative('${safeInit}')">+</div>
+            <div class="sticky-icon-btn" title="分岐追加" onclick="event.stopPropagation(); window.pendingParentId='${t.id}'; window.pendingBranchX=${t.x + 200}; window.pendingBranchY=${t.y + 160}; openAddTaskForInitiative('${t.initiativeId || ''}')">+</div>
           </div>
         `;
 
@@ -2565,14 +3362,14 @@
       markerNodes.forEach(mNode => {
         const mX = mNode.offsetLeft + mNode.offsetWidth / 2;
         const mY = mNode.offsetTop;
-        const initName = mNode.getAttribute('data-init');
+        const initiativeId = mNode.getAttribute('data-init');
 
         drawCurvePath(svg, rootX, rootY, mX, mY, '#64748B', true, () => {
-          openAddTaskForInitiative(initName);
+          openAddTaskForInitiative(initiativeId);
         }, '施策の下にタスクを挿入');
 
         // Connect Marker Header (Center-Bottom) -> Level 1 Sticky Notes (Center-Top)
-        const level1Tasks = deptTasks.filter(t => t.initiative === initName && !t.parentId);
+        const level1Tasks = deptTasks.filter(t => t.initiativeId === initiativeId && !t.parentId);
         level1Tasks.forEach(t => {
           const tNode = document.getElementById(`sticky-node-${t.id}`);
           if (tNode) {
@@ -2581,7 +3378,7 @@
             const mBottomY = mNode.offsetTop + mNode.offsetHeight;
 
             drawCurvePath(svg, mX, mBottomY, tX, tY, '#0EA5E9', false, () => {
-              openInsertTaskBetween(null, t.id, initName);
+              openInsertTaskBetween(null, t.id, initiativeId);
             }, '枝に新規タスクを挿入');
           }
         });
@@ -2601,7 +3398,7 @@
             const cY = cNode.offsetTop;
 
             drawCurvePath(svg, pX, pY, cX, cY, '#3B82F6', false, () => {
-              openInsertTaskBetween(parent.id, child.id, parent.initiative);
+              openInsertTaskBetween(parent.id, child.id, parent.initiativeId);
             }, '分岐枝にタスクを挿入');
           }
         }
@@ -2666,12 +3463,12 @@
     }
 
     // Branch Action Triggers
-    function openAddBranchSubTask(parentId, initiativeName) {
+    function openAddBranchSubTask(parentId, initiativeId) {
       openAddTaskModal();
       const parentTask = tasks.find(t => t.id === parentId);
 
       document.getElementById('modal-heading').innerText = `「${parentTask ? parentTask.title.slice(0, 12) : ''}...」に分岐子タスクを追加`;
-      document.getElementById('modal-task-initiative').value = initiativeName;
+      populateInitiativeSelect(initiativeId);
 
       const existingChildren = getVisibleTasks('default').filter(t => t.parentId === parentId);
       const childCount = existingChildren.length;
@@ -2682,10 +3479,10 @@
       window.pendingBranchY = (parentTask?.y || 300) + 210;
     }
 
-    function openInsertTaskBetween(parentId, childId, initiativeName) {
+    function openInsertTaskBetween(parentId, childId, initiativeId) {
       openAddTaskModal();
       document.getElementById('modal-heading').innerText = '枝の間に新しいタスクノードを挿入';
-      document.getElementById('modal-task-initiative').value = initiativeName;
+      populateInitiativeSelect(initiativeId);
 
       const childTask = tasks.find(t => t.id === childId);
       window.pendingParentId = parentId;
@@ -2699,33 +3496,52 @@
       const tbody = document.getElementById('dept-task-tbody');
       tbody.innerHTML = '';
 
-      const deptTasks = getVisibleTasks('whiteboard').filter(t => t.department_id === currentDept);
+      const deptTasks = getVisibleTasks('list').filter(t => t.department_id === currentDept);
 
       deptTasks.forEach(t => {
         const st = statusMap[t.status];
         const tr = document.createElement('tr');
         tr.innerHTML = `
-          <td style="color:var(--text-secondary); font-weight:500;">${t.initiative}</td>
+          <td style="color:var(--text-secondary); font-weight:500;">${initiatives.find(i => i.id === t.initiativeId)?.title || ''}</td>
           <td><strong>${t.title}</strong></td>
           <td>${users.find(u => u.id === t.assignee_id)?.name || ''}</td>
           <td><span class="status-badge ${st.class}">${st.label}</span></td>
           <td>
-            <div style="display:flex; align-items:center; gap:8px;">
-              <div style="width:60px; height:6px; background:#E2E8F0; border-radius:10px; overflow:hidden;">
-                <div style="width:${t.progress}%; height:100%; background:${st.color};"></div>
+            <div class="inline-progress-cell" style="display:flex; align-items:center; gap:10px; min-width:240px;">
+              <div class="inline-progress-track" style="flex:1; height:8px; background:#E2E8F0; border-radius:10px; overflow:hidden;">
+                <div class="inline-progress-fill" style="width:${t.progress}%; height:100%; background:${st.color};"></div>
               </div>
-              <span>${t.progress}%</span>
+              <input type="range" min="0" max="100" step="5" value="${t.progress}"
+                oninput="this.closest('.inline-progress-cell').querySelector('.inline-progress-fill').style.width = this.value + '%'; this.closest('.inline-progress-cell').querySelector('.inline-progress-pct').innerText = this.value + '%';"
+                onchange="updateTaskProgressInline('${t.id}', this.value)"
+                style="width:120px;" />
+              <span class="inline-progress-pct" style="min-width:34px; text-align:right; font-weight:600; font-size:0.8rem;">${t.progress}%</span>
             </div>
           </td>
           <td>${t.isRoutine ? '🔄 ルーティン' : 'ワンショット'}</td>
-          <td>
-            <button class="view-mode-btn" style="padding:4px 10px; font-size:0.8rem;" onclick="openEditTaskModal('${t.id}')">
-              編集
-            </button>
-          </td>
         `;
         tbody.appendChild(tr);
       });
+    }
+
+    // Inline progress-slider commit (タスク一覧 table) — no modal needed.
+    function updateTaskProgressInline(id, value) {
+      const task = tasks.find(t => t.id === id);
+      if (!task) return;
+
+      const val = parseInt(value);
+      task.progress = val;
+
+      let status = 'unstarted';
+      if (val >= 100) status = 'completed';
+      else if (val >= 85 && task.isApprovalRequired !== false) status = 'submitted';
+      else if (val >= 60) status = 'sixty';
+      else if (val >= 10) status = 'in-progress';
+      task.status = status;
+
+      if (sbClient) sbClient.from('tasks').update(toDbTaskPayload({ progress: val, status: status })).eq('id', task.id).then(({ error }) => { if (error) console.error(error); });
+
+      renderAllViews();
     }
 
     // Drawer Control
@@ -2843,7 +3659,10 @@
     function updateScheduledTaskTitle(id, newTitle) {
       if(!currentCalendarDate || !window.scheduledTasks[currentCalendarDate]) return;
       const t = window.scheduledTasks[currentCalendarDate].find(x => x.id === id);
-      if(t) t.title = newTitle;
+      if(t) {
+        t.title = newTitle;
+        if(sbClient) sbClient.from('scheduled_tasks').update({ title: newTitle }).eq('id', id).then(({ error }) => { if (error) console.error(error); });
+      }
     }
 
     function toggleScheduledTaskDone(id, isDone) {
@@ -2857,8 +3676,10 @@
 
     function unscheduleTask(id) {
       if(!currentCalendarDate || !window.scheduledTasks[currentCalendarDate]) return;
+      if (!confirm('この予定を削除しますか？')) return;
+
       window.scheduledTasks[currentCalendarDate] = window.scheduledTasks[currentCalendarDate].filter(x => x.id !== id);
-      if(sbClient) sbClient.from('scheduled_tasks').delete().eq('id', id).eq('date', currentCalendarDate).then(({ error }) => { if (error) console.error(error); });
+      if(sbClient) sbClient.from('scheduled_tasks').delete().eq('id', id).then(({ error }) => { if (error) console.error(error); });
       renderTimetable();
     }
 
@@ -2877,11 +3698,12 @@
             
             const task = tasks.find(t => t.id === taskId);
             if (task && currentCalendarDate) {
-              const newId = 'sched-' + Date.now() + Math.floor(Math.random() * 1000);
+              const newId = crypto.randomUUID();
               if(!window.scheduledTasks[currentCalendarDate]) window.scheduledTasks[currentCalendarDate] = [];
               const st = {
                 id: newId,
-                originalId: taskId,
+                userId: currentUserId,
+                taskId: taskId,
                 date: currentCalendarDate,
                 title: task.title,
                 h, m,
@@ -2889,9 +3711,9 @@
                 completed: false
               };
               window.scheduledTasks[currentCalendarDate].push(st);
-              if(sbClient) sbClient.from('scheduled_tasks').insert([{ id: st.id, original_id: st.originalId, date: st.date, title: st.title, h: st.h, m: st.m, duration: st.duration, completed: st.completed }]).then(({ error }) => { if (error) console.error(error); });
+              if(sbClient) sbClient.from('scheduled_tasks').insert([{ id: st.id, user_id: st.userId, task_id: st.taskId, date: st.date, title: st.title, h: st.h, m: st.m, duration: st.duration, completed: st.completed }]).then(({ error }) => { if (error) console.error(error); });
               evt.item.remove();
-              setTimeout(renderTimetable, 50); 
+              setTimeout(renderTimetable, 50);
             } else {
               evt.item.remove();
             }
@@ -2969,24 +3791,38 @@
       document.getElementById('modal-task-id').value = '';
       document.getElementById('modal-task-title').value = '';
       document.getElementById('modal-task-assignee').value = users[0]?.id || '';
+      document.querySelector('input[name="modal-task-type"][value="business"]').checked = true;
       document.querySelector('input[name="modal-task-approval"][value="true"]').checked = true;
       document.getElementById('modal-task-routine-type').value = 'none';
+      toggleTaskTypeInputs();
       toggleRoutineInputs();
-      
+
       window.pendingParentId = null;
       window.pendingChildId = null;
       window.pendingBranchX = null;
       window.pendingBranchY = null;
-      
+      window.pendingInitiativeId = null;
+
+      populateInitiativeSelect();
+
       document.getElementById('modal-task-progress-range').value = 0;
       handleSliderInput(0);
-      
+
       document.getElementById('task-modal').classList.add('active');
     }
 
-    function openAddTaskForInitiative(initName) {
+    function openAddTaskForInitiative(initiativeId) {
       openAddTaskModal();
-      window.pendingInitiative = initName;
+      window.pendingInitiativeId = initiativeId;
+      populateInitiativeSelect(initiativeId);
+    }
+
+    // Independent task with no initiative/parent — lives in the 事務タスク zone.
+    function addAdminTask() {
+      openAddTaskModal();
+      window.pendingInitiativeId = null;
+      window.pendingParentId = null;
+      populateInitiativeSelect(null);
     }
 
     function openEditTaskModal(id) {
@@ -3000,7 +3836,7 @@
 
       const type = task.type === 'personal' ? 'personal' : 'business';
       document.querySelector(`input[name="modal-task-type"][value="${type}"]`).checked = true;
-      document.getElementById('modal-task-initiative').value = task.initiative || '';
+      populateInitiativeSelect(task.initiativeId);
       toggleTaskTypeInputs();
 
       const appReq = task.isApprovalRequired !== false;
@@ -3049,7 +3885,7 @@
     }
 
     function executeSplitTask() {
-      const origId = parseInt(document.getElementById('split-original-task-id').value);
+      const origId = document.getElementById('split-original-task-id').value;
       const origTaskIndex = tasks.findIndex(t => t.id === origId);
       if (origTaskIndex === -1) return;
       const origTask = tasks[origTaskIndex];
@@ -3081,7 +3917,7 @@
         const newTask = {
           id: newId,
           department_id: origTask.department_id,
-          initiative: origTask.initiative,
+          initiativeId: origTask.initiativeId,
           title: nt.title,
           assignee_id: origTask.assignee_id,
           status: 'unstarted',
@@ -3141,14 +3977,16 @@
       const colors = ['sticky-yellow', 'sticky-blue', 'sticky-green', 'sticky-purple'];
       const randomColor = colors[Math.floor(Math.random() * colors.length)];
 
+      const selectedInitiativeId = document.getElementById('modal-task-initiative').value;
+      const initiativeId = (taskType === 'personal' || selectedInitiativeId === '__add_new__') ? null : (selectedInitiativeId || null);
+
       if (idVal) {
         const task = tasks.find(t => t.id === idVal);
         if (task) {
           task.title = title;
           task.type = taskType;
           task.assignee_id = assignee_id;
-          if (taskType === 'personal') task.initiative = '';
-          else if (document.getElementById('modal-task-initiative')) task.initiative = document.getElementById('modal-task-initiative').value;
+          task.initiativeId = initiativeId;
           task.status = status;
           task.progress = progress;
           task.isApprovalRequired = isApprovalRequired;
@@ -3156,33 +3994,37 @@
           task.routineDay = routineDay;
           task.routineTime = routineTime;
           task.isRoutine = (routineType !== 'none');
-          if(sbClient) sbClient.from('tasks').update(toDbTaskPayload({ type: task.type, title: task.title, assignee_id: task.assignee_id, status: task.status, progress: task.progress, isApprovalRequired: task.isApprovalRequired, routineType: task.routineType, routineDay: task.routineDay, routineTime: task.routineTime, isRoutine: task.isRoutine, initiative: task.initiative })).eq('id', task.id).then(({ error }) => { if (error) console.error(error); });
+          if(sbClient) sbClient.from('tasks').update(toDbTaskPayload({ type: task.type, title: task.title, assignee_id: task.assignee_id, status: task.status, progress: task.progress, isApprovalRequired: task.isApprovalRequired, routineType: task.routineType, routineDay: task.routineDay, routineTime: task.routineTime, isRoutine: task.isRoutine, initiativeId: task.initiativeId })).eq('id', task.id).then(({ error }) => { if (error) console.error(error); });
         }
       } else {
         const newId = crypto.randomUUID();
         let defaultX = 300;
         let defaultY = 300;
-        
-        const initiative = window.pendingInitiative || "アタックリストの精度向上";
 
-        const deptTasks = getVisibleTasks('default').filter(t => t.department_id === currentDept && t.initiative === initiative);
-        const initiatives = Array.from(new Set(getVisibleTasks('default').filter(t => t.department_id === currentDept).map(t => t.initiative)));
-        const initIdx = initiatives.indexOf(initiative);
-        const totalCols = Math.max(1, initiatives.length);
+        const deptTasks = getVisibleTasks('default').filter(t => t.department_id === currentDept && t.initiativeId === initiativeId);
+        const monthlyGoals = initiatives.filter(i => i.department_id === currentDept && i.type === 'monthly_goal');
+        const initIdx = monthlyGoals.findIndex(i => i.id === initiativeId);
+        const totalCols = Math.max(1, monthlyGoals.length);
         const colWidth = 460;
         const startX = 700 - ((totalCols - 1) * colWidth) / 2;
 
         if (initIdx >= 0) {
           defaultX = startX + initIdx * colWidth - 120;
           defaultY = 280 + deptTasks.length * 190;
+        } else if (!initiativeId && !window.pendingParentId) {
+          // Independent "事務タスク" — stack inside the admin zone
+          const orphanCount = getVisibleTasks('default').filter(t => t.department_id === currentDept && !t.parentId && !t.initiativeId).length;
+          defaultX = 60;
+          defaultY = 90 + orphanCount * 100;
         }
 
         const newTask = {
           id: newId,
           department_id: currentDept,
-          initiative: initiative,
+          initiativeId: initiativeId,
           title: title,
           assignee_id: assignee_id,
+          type: taskType,
           status: status,
           progress: progress,
           stickyColor: randomColor,
@@ -3214,7 +4056,7 @@
       window.pendingChildId = null;
       window.pendingBranchX = null;
       window.pendingBranchY = null;
-      window.pendingInitiative = null;
+      window.pendingInitiativeId = null;
 
       closeModal('task-modal');
       renderAllViews();

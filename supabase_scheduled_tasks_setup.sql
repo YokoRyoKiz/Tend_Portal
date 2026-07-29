@@ -1,10 +1,11 @@
 -- Run this in the Supabase dashboard's SQL Editor (anon key alone can't run DDL).
--- Creates the scheduled_tasks table used by the calendar / timetable view,
--- which currently doesn't exist (every save silently 404s).
+-- Creates the scheduled_tasks table used by the timetable, which doesn't
+-- exist yet (every timetable save currently 404s).
 
 create table if not exists public.scheduled_tasks (
-  id text primary key,
-  original_id uuid references public.tasks(id) on delete set null,
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid references public.users(id) on delete cascade,
+  task_id uuid references public.tasks(id) on delete set null,
   date date not null,
   title text not null,
   h integer not null,
@@ -14,11 +15,14 @@ create table if not exists public.scheduled_tasks (
   created_at timestamptz default now()
 );
 
+create index if not exists scheduled_tasks_user_date_idx on public.scheduled_tasks (user_id, date);
+
 alter table public.scheduled_tasks enable row level security;
 
 -- No login/auth system exists yet, so this mirrors the already-open
 -- policy the `tasks` table effectively has today. Anyone holding the
 -- public anon key can read/write this table under this policy.
+drop policy if exists "anon full access (no auth yet)" on public.scheduled_tasks;
 create policy "anon full access (no auth yet)" on public.scheduled_tasks
   for all to anon using (true) with check (true);
 
