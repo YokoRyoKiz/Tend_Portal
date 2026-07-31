@@ -88,6 +88,12 @@
 CHECK ((type = ANY (ARRAY['business'::text, 'personal'::text, 'initiative'::text])))
 
 
+ALTER TABLE tasks DROP CONSTRAINT tasks_type_check;
+
+ALTER TABLE tasks ADD CONSTRAINT tasks_type_check
+  CHECK (type = ANY (ARRAY['business'::text, 'personal'::text, 'initiative'::text, 'project'::text]));
+
+
 SELECT conname, pg_get_constraintdef(oid)
 FROM pg_constraint
 WHERE conname = 'tasks_type_check';
