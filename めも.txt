@@ -84,3 +84,10 @@
 
 タスクのページでタスクタブを全画面に展開した時にタスクの1アイテムの境界線がわかりにくい
 タスク1アイテムのカードを強調してわかりやすくして
+
+
+
+
+SELECT conname, pg_get_constraintdef(oid)
+FROM pg_constraint
+WHERE conname = 'tasks_type_check';
