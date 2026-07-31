@@ -1071,34 +1071,109 @@
       border-spacing: 0;
     }
     table.task-card-table th {
-      border-bottom: 2px solid var(--border-color);
+      border-bottom: 1px solid var(--border-color);
     }
     table.task-card-table tr.task-card-main td {
-      border-top: 2px solid #94A3B8;
-      border-bottom: none;
-      background: #FFFFFF;
+      border-top: 1px solid #E2E8F0;
+      border-bottom: 1px solid #E2E8F0;
+      padding: 14px 16px;
+      vertical-align: middle;
+      transition: background-color 0.15s ease, border-color 0.15s ease;
+    }
+    table.task-card-table tr.task-card-main:hover td {
+      border-color: #CBD5E1;
     }
     table.task-card-table tr.task-card-main td:first-child {
-      border-left: 2px solid #94A3B8;
-      border-top-left-radius: 8px;
+      border-left: 1px solid #E2E8F0;
+      border-top-left-radius: 10px;
+      border-bottom-left-radius: 10px;
     }
     table.task-card-table tr.task-card-main td:last-child {
-      border-right: 2px solid #94A3B8;
-      border-top-right-radius: 8px;
-    }
-    table.task-card-table tr.task-card-sub td {
-      border-bottom: 2px solid #94A3B8;
-      border-left: 2px solid #94A3B8;
-      border-right: 2px solid #94A3B8;
-      border-top: none;
-      border-bottom-left-radius: 8px;
-      border-bottom-right-radius: 8px;
+      border-right: 1px solid #E2E8F0;
+      border-top-right-radius: 10px;
+      border-bottom-right-radius: 10px;
     }
     table.task-card-table tr.task-card-spacer td {
       border: none !important;
       background: transparent !important;
       padding: 0;
-      height: 20px;
+      height: 12px;
+    }
+
+    .flip-container {
+      perspective: 1000px;
+      width: 100%;
+    }
+    .flipper {
+      display: grid;
+      transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      transform-style: preserve-3d;
+    }
+    .flip-row.flipped .flipper {
+      transform: rotateX(180deg);
+    }
+    .front, .back {
+      grid-area: 1 / 1;
+      backface-visibility: hidden;
+      width: 100%;
+    }
+    .front {
+      transform: rotateX(0deg);
+    }
+    .back {
+      transform: rotateX(180deg);
+      background: linear-gradient(135deg, #F8FAFC 0%, #F1F5F9 100%);
+      border: 1px solid #CBD5E1;
+      border-radius: 10px;
+      padding: 14px 18px;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+    }
+
+    .btn-action-flip {
+      background: #F1F5F9;
+      color: #475569;
+      border: 1px solid #E2E8F0;
+      border-radius: 6px;
+      padding: 5px 10px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+    .btn-action-flip:hover {
+      background: #E2E8F0;
+      color: #0F172A;
+      border-color: #CBD5E1;
+    }
+    .btn-action-edit {
+      background: #EFF6FF;
+      color: #0284C7;
+      border: 1px solid #BAE6FD;
+      border-radius: 6px;
+      padding: 5px 10px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+    .btn-action-edit:hover {
+      background: #0284C7;
+      color: #FFFFFF;
+      border-color: #0284C7;
     }
 
     .status-badge {
@@ -1309,6 +1384,12 @@
     }
     .sticky-icon-btn.split-btn:hover {
       background: #7C3AED;
+    }
+    .sticky-icon-btn.add-btn {
+      background: #10B981;
+    }
+    .sticky-icon-btn.add-btn:hover {
+      background: #059669;
     }
 
     /* Modal Styling */
@@ -1884,15 +1965,15 @@
         </div>
         
         <div class="drawer-table-view">
-          <div class="table-card" style="margin: 0; box-shadow: none;">
-            <table class="custom-table task-card-table" style="width: 100%;">
+          <div class="table-card" style="margin: 0; box-shadow: 0 4px 20px rgba(15, 23, 42, 0.04); border: 1px solid #E2E8F0; border-radius: 12px; overflow: hidden; background: white;">
+            <table class="custom-table task-card-table" style="width: 100%; border-collapse: separate; border-spacing: 0;">
               <thead>
-                <tr>
-                  <th>施策・プロジェクト</th>
-                  <th>達成項目（タスク名）</th>
-                  <th>進捗状況</th>
-                  <th style="min-width:260px;">進捗率</th>
-                  <th>締め切り</th>
+                <tr style="background: #F8FAFC; border-bottom: 1px solid #E2E8F0;">
+                  <th style="width: 25%; padding: 14px 16px; font-size: 0.78rem; font-weight: 700; color: #475569; letter-spacing: 0.03em;">施策・プロジェクト</th>
+                  <th style="width: 28%; padding: 14px 16px; font-size: 0.78rem; font-weight: 700; color: #475569; letter-spacing: 0.03em;">達成項目（タスク名）</th>
+                  <th style="width: 280px; padding: 14px 16px; font-size: 0.78rem; font-weight: 700; color: #475569; letter-spacing: 0.03em;">進捗率・ステータス</th>
+                  <th style="width: 120px; padding: 14px 16px; font-size: 0.78rem; font-weight: 700; color: #475569; letter-spacing: 0.03em;">締め切り</th>
+                  <th style="width: 90px; padding: 14px 16px; font-size: 0.78rem; font-weight: 700; color: #475569; letter-spacing: 0.03em; text-align: center;">操作</th>
                 </tr>
               </thead>
               <tbody id="dept-task-tbody">
@@ -4161,6 +4242,7 @@
           </div>
           <div class="sticky-actions-container">
             <div class="sticky-icon-btn split-btn" title="タスク分解" onclick="event.stopPropagation(); openSplitModal('${t.id}')">✂</div>
+            <div class="sticky-icon-btn add-btn" title="タスク追加" onclick="event.stopPropagation(); openAddTaskForInitiative('${t.id}', event)">➕</div>
           </div>
         `;
 
@@ -4338,66 +4420,101 @@
         const isRevising = t.status === 'revising';
         const isPersonal = t.type === 'personal';
         const tr = document.createElement('tr');
-        tr.className = 'task-card-main';
-        if (isRevising) {
-          tr.style.backgroundColor = '#FEF9C3';
-        } else if (isPersonal) {
-          tr.style.backgroundColor = '#E0F2FE';
-        }
+        tr.className = 'flip-row';
+        const frontBg = (isRevising ? '#FEF9C3' : (isPersonal ? '#F0F9FF' : '#FFFFFF'));
+
         tr.innerHTML = `
-          <td style="color:var(--text-secondary); font-weight:500;">${getInitiativeTitleOfTask(t)}</td>
-          <td><strong>${t.title}</strong></td>
-          <td><span class="status-badge ${st.class}">${st.label}</span></td>
-          <td>
-            ${isRevising ? `
-            <div style="display:flex; align-items:center; min-width:320px; padding: 8px 0;">
-              <button class="action-btn-primary" style="background:#DC2626;" onclick="resubmitTask('${t.id}')">🔁 再提出</button>
-            </div>
-            ` : `
-            <div class="inline-progress-cell" style="display:flex; align-items:center; gap:10px; min-width:320px; padding-bottom: 24px; padding-top: 8px;">
-              <div style="position: relative; flex: 1;">
-                <input type="range" min="0" max="100" step="5" value="${t.progress}"
-                  oninput="this.closest('.inline-progress-cell').querySelector('.inline-progress-pct').innerText = this.value + '%';"
-                  onchange="updateTaskProgressInline('${t.id}', this, this.value, ${t.progress || 0})"
-                  style="width:100%; cursor:pointer; position: relative; z-index: 5; margin: 0;" />
-                <div style="position: absolute; top: 10px; left: 8px; right: 8px; height: 20px; pointer-events: none; z-index: 1;">
-                  <div class="slider-tick" style="left: 0%; width:10px; height:10px; top:1px;"><span style="font-size:0.65rem; top:14px; color:#94A3B8;">0%</span></div>
-                  <div class="slider-tick" style="left: 10%; width:10px; height:10px; top:1px;"><span style="font-size:0.65rem; top:14px; color:#94A3B8;">10%</span></div>
-                  <div class="slider-tick" style="left: 60%; width:10px; height:10px; top:1px;"><span style="font-size:0.65rem; top:14px; color:#94A3B8;">60%</span></div>
-                  <div class="slider-tick" style="left: 90%; width:10px; height:10px; top:1px;"><span style="font-size:0.65rem; top:14px; color:#94A3B8;">90%</span></div>
-                  <div class="slider-tick" style="left: 100%; width:10px; height:10px; top:1px;"><span style="font-size:0.65rem; top:14px; color:#94A3B8;">100%</span></div>
+          <td colspan="5" style="padding:0; border:none; background:transparent;">
+            <div class="flip-container">
+              <div class="flipper">
+                <div class="front">
+                  <table class="custom-table task-card-table" style="width:100%; table-layout:fixed; margin:0; border-spacing:0; border-collapse:separate;">
+                    <tr class="task-card-main">
+                      <td style="width:25%; color:#475569; font-weight:600; font-size:0.85rem; background:${frontBg}; border-top-left-radius:10px; border-bottom-left-radius:10px; padding:14px 16px;">
+                        <div style="display:flex; align-items:center; gap:6px;">
+                          <span style="opacity:0.7;">📌</span>
+                          <span>${getInitiativeTitleOfTask(t)}</span>
+                        </div>
+                      </td>
+                      <td style="width:28%; background:${frontBg}; padding:14px 16px;">
+                        <span style="font-weight:600; color:#0F172A; font-size:0.92rem; line-height:1.4;">${t.title}</span>
+                      </td>
+                      <td style="width:280px; background:${frontBg}; padding:12px 16px;">
+                        ${isRevising ? `
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+                          <span class="status-badge ${st.class}">${st.label}</span>
+                          <span style="font-weight:700; font-size:0.82rem; color:#DC2626; background:#FEF2F2; padding:2px 8px; border-radius:12px; border:1px solid #FCA5A5;">要修正</span>
+                        </div>
+                        <div style="display:flex; align-items:center; min-width:240px; padding: 4px 0;">
+                          <button class="action-btn-primary" style="background:#DC2626; border-radius:6px; font-size:0.8rem; width:100%; padding:6px 12px;" onclick="resubmitTask('${t.id}')">🔁 再提出する</button>
+                        </div>
+                        ` : `
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+                          <span class="status-badge ${st.class}">${st.label}</span>
+                          <span class="inline-progress-pct" style="font-weight:700; font-size:0.82rem; color:#0EA5E9; background:#F0F9FF; padding:2px 8px; border-radius:12px; border:1px solid #BAE6FD;">${t.progress}%</span>
+                        </div>
+                        <div class="inline-progress-cell" style="display:flex; flex-direction:column; gap:6px; min-width:240px; padding: 4px 0 28px 0;">
+                          <div style="position: relative; width: 100%;">
+                            <input type="range" min="0" max="100" step="5" value="${t.progress}"
+                              oninput="this.closest('td').querySelector('.inline-progress-pct').innerText = this.value + '%';"
+                              onchange="updateTaskProgressInline('${t.id}', this, this.value, ${t.progress || 0})"
+                              style="width:100%; cursor:pointer; position: relative; z-index: 5; margin: 0; accent-color: #0EA5E9;" />
+                            <div style="position: absolute; top: 2px; left: 8px; right: 8px; height: 16px; pointer-events: none; z-index: 1;">
+                              <div class="slider-tick" style="left: 0%; top: 0px; width: 9px; height: 9px; border-width: 2px; border-color: #94A3B8;"><span style="font-size: 0.62rem; top: 10px; color: #64748B; font-weight: 600;">0%</span></div>
+                              <div class="slider-tick" style="left: 10%; top: 0px; width: 9px; height: 9px; border-width: 2px; border-color: #3B82F6;"><span style="font-size: 0.62rem; top: 10px; color: #3B82F6; font-weight: 600;">10%<br><span style="font-size:0.58rem; font-weight:normal;">着手</span></span></div>
+                              <div class="slider-tick" style="left: 60%; top: 0px; width: 9px; height: 9px; border-width: 2px; border-color: #8B5CF6;"><span style="font-size: 0.62rem; top: 10px; color: #8B5CF6; font-weight: 600;">60%<br><span style="font-size:0.58rem; font-weight:normal;">6割</span></span></div>
+                              <div class="slider-tick" style="left: 90%; top: 0px; width: 9px; height: 9px; border-width: 2px; border-color: #F59E0B; background: #FEF3C7;"><span style="font-size: 0.62rem; top: 10px; color: #D97706; font-weight: 700;">90%<br><span style="font-size:0.58rem; font-weight:bold; color:#D97706;">申請</span></span></div>
+                              <div class="slider-tick" style="left: 100%; top: 0px; width: 9px; height: 9px; border-width: 2px; border-color: #10B981;"><span style="font-size: 0.62rem; top: 10px; color: #10B981; font-weight: 600;">100%<br><span style="font-size:0.58rem; font-weight:normal;">完了</span></span></div>
+                            </div>
+                          </div>
+                        </div>
+                        `}
+                      </td>
+                      <td style="width:120px; background:${frontBg}; padding:14px 16px;">
+                        <div style="display:flex; align-items:center; gap:6px; font-size:0.85rem; font-weight:600; color:#475569;">
+                          <svg width="14" height="14" fill="none" stroke="#64748B" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                          <span>${t.deadline || '未設定'}</span>
+                        </div>
+                      </td>
+                      <td style="width:90px; background:${frontBg}; border-top-right-radius:10px; border-bottom-right-radius:10px; text-align:center; padding:12px 10px;">
+                        <div style="display:flex; flex-direction:column; gap:6px; align-items:center; justify-content:center;">
+                          <button onclick="this.closest('.flip-row').classList.toggle('flipped')" class="btn-action-flip" style="width:100%;" title="詳細・備考を表示">🔁 備考</button>
+                          <button onclick="openEditTaskModal('${t.id}')" class="btn-action-edit" style="width:100%;" title="タスク情報を編集">✏️ 編集</button>
+                        </div>
+                      </td>
+                    </tr>
+                  </table>
+                </div>
+                <div class="back" onclick="event.stopPropagation()">
+                  <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #E2E8F0; padding-bottom:8px;">
+                    <div style="display:flex; align-items:center; gap:8px;">
+                      <span style="font-size:0.85rem; font-weight:700; color:#1E293B;">📋 タスク詳細情報</span>
+                      <span style="font-size:0.75rem; color:#64748B; font-weight:600; background:#E2E8F0; padding:2px 8px; border-radius:10px;">${t.title}</span>
+                    </div>
+                    <button onclick="this.closest('.flip-row').classList.remove('flipped')" class="btn-action-flip" style="padding:4px 12px; font-size:0.75rem; border-radius:14px; background:#E2E8F0; color:#334155;">✕ 閉じる</button>
+                  </div>
+                  <div style="display: flex; gap: 16px; height: calc(100% - 36px);">
+                    <div style="flex: 1; display: flex; flex-direction: column; background:white; padding:12px; border-radius:8px; border:1px solid #E2E8F0; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+                      <label style="font-size:0.78rem; font-weight:700; color:#475569; margin-bottom:6px; display:flex; align-items:center; gap:4px;">📝 備考 (クリックで編集)</label>
+                      ${editingNoteTaskId === t.id
+                        ? `<textarea id="note-edit-${t.id}" style="width:100%; flex:1; min-height:65px; font-size:0.85rem; padding:8px; border:1px solid #0EA5E9; border-radius:6px; resize:none; outline:none;" onblur="commitEditNote('${t.id}', this.value)" placeholder="タスクの備考を入力...">${t.note || ''}</textarea>`
+                        : `<div onclick="startEditNote('${t.id}')" style="width:100%; flex:1; min-height:65px; font-size:0.85rem; padding:8px; border:1px solid #F1F5F9; border-radius:6px; background:#F8FAFC; cursor:text; white-space:pre-wrap; word-break:break-word; color:#334155;">${t.note ? linkifyText(t.note) : '<span style="color:#94A3B8;">クリックして備考を入力...</span>'}</div>`
+                      }
+                    </div>
+                    <div style="flex: 1; display: flex; flex-direction: column; background:white; padding:12px; border-radius:8px; border:1px solid #E2E8F0; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
+                      <label style="font-size:0.78rem; font-weight:700; color:#475569; margin-bottom:6px; display:flex; align-items:center; gap:4px;">💬 コメント (承認キュー・修正指示)</label>
+                      <div style="width:100%; flex:1; min-height:65px; font-size:0.85rem; padding:8px; border:1px solid #F1F5F9; border-radius:6px; background:#F8FAFC; overflow-y:auto; color:#334155;">
+                        ${t.comment || '<span style="color:#94A3B8;">(コメントはありません)</span>'}
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </div>
-              <span class="inline-progress-pct" style="min-width:34px; text-align:right; font-weight:600; font-size:0.8rem; margin-top:-24px;">${t.progress}%</span>
             </div>
-            `}
           </td>
-          <td>${t.deadline || '未設定'}</td>
         `;
         tbody.appendChild(tr);
 
-        const tr2 = document.createElement('tr');
-        tr2.className = 'task-card-sub';
-        tr2.innerHTML = `
-          <td colspan="5" style="background-color: #F8FAFC; padding: 12px 16px;">
-            <div style="display: flex; gap: 24px;">
-              <div style="flex: 1;">
-                <label style="font-size:0.8rem; font-weight:bold; color:var(--text-secondary); margin-bottom:6px; display:block;">📝 備考</label>
-                ${editingNoteTaskId === t.id
-                  ? `<textarea id="note-edit-${t.id}" style="width:100%; height:60px; font-size:0.85rem; padding:8px; border:1px solid #CBD5E1; border-radius:4px; resize:none;" onblur="commitEditNote('${t.id}', this.value)" placeholder="タスクの備考を入力...">${t.note || ''}</textarea>`
-                  : `<div onclick="startEditNote('${t.id}')" style="width:100%; min-height:60px; font-size:0.85rem; padding:8px; border:1px solid #CBD5E1; border-radius:4px; background:white; cursor:text; white-space:pre-wrap; word-break:break-word;">${t.note ? linkifyText(t.note) : '<span style="color:#94A3B8;">クリックして備考を入力...</span>'}</div>`
-                }
-              </div>
-              <div style="flex: 1;">
-                <label style="font-size:0.8rem; font-weight:bold; color:var(--text-secondary); margin-bottom:6px; display:block;">💬 コメント (トップページ承認キュー・修正指示等)</label>
-                <div style="width:100%; height:60px; font-size:0.85rem; padding:8px; border:1px solid #E2E8F0; border-radius:4px; background:white; overflow-y:auto; color:var(--text-main);">
-                  ${t.comment || '<span style="color:#94A3B8;">(コメントはありません)</span>'}
-                </div>
-              </div>
-            </div>
-          </td>
-        `;
-        tbody.appendChild(tr2);
       });
     }
 
@@ -4447,7 +4564,8 @@
         // Already awaiting approval: progress stays pinned at 90 until approved or reopened.
         if (task.status === 'submitted') {
           inputEl.value = 90;
-          inputEl.closest('.inline-progress-cell').querySelector('.inline-progress-pct').innerText = '90%';
+          const pctEl = inputEl.closest('td')?.querySelector('.inline-progress-pct') || inputEl.closest('.inline-progress-cell')?.querySelector('.inline-progress-pct');
+          if (pctEl) pctEl.innerText = '90%';
           return;
         }
 
@@ -4455,7 +4573,8 @@
           // Revert the slider now; the app's own confirm modal (not a native confirm()) decides the rest.
           const revertVal = Math.min(prevValue || 0, 89);
           inputEl.value = revertVal;
-          inputEl.closest('.inline-progress-cell').querySelector('.inline-progress-pct').innerText = revertVal + '%';
+          const pctEl = inputEl.closest('td')?.querySelector('.inline-progress-pct') || inputEl.closest('.inline-progress-cell')?.querySelector('.inline-progress-pct');
+          if (pctEl) pctEl.innerText = revertVal + '%';
 
           openSubmitConfirmModal(() => {
             const t = tasks.find(x => x.id === id);
