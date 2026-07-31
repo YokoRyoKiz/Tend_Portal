@@ -453,17 +453,20 @@
       for (let i = 0; i < 14; i++) {
         const d = new Date(today);
         d.setDate(today.getDate() + i);
-        const dateStr = `${d.getFullYear()}/${String(d.getMonth() + 1).padStart(2, '0')}/${String(d.getDate()).padStart(2, '0')}`;
-        
-        const dayTasks = tasks.filter(t => t.deadline === dateStr);
+        const dateStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        const currentUserAssignee = '山田 太郎'; // Mock user
+        const dayTasks = tasks.filter(t => t.deadline === dateStr && (t.type === 'personal' ? t.assignee === currentUserAssignee : t.dept === currentDept));
 
         let taskHtml = '';
         dayTasks.forEach(t => {
           const typeClass = t.type === 'personal' ? 'personal' : 'business';
           taskHtml += `
             <div class="timeline-task-card ${typeClass}">
-              <span>${t.title}</span>
-              <span style="color:var(--text-secondary); font-size:0.75rem;">${t.type === 'personal' ? '👤 個人' : '🏢 業務'}</span>
+              <div style="display:flex; flex-direction:column; gap:4px;">
+                <span style="font-weight:600;">${t.title}</span>
+                <span style="font-size:0.75rem; color:var(--text-secondary);">締切: ${t.deadline || '未定'}</span>
+              </div>
+              <span style="color:var(--text-secondary); font-size:0.75rem; white-space:nowrap; margin-left:8px;">${t.type === 'personal' ? '👤 個人' : '🏢 業務'}</span>
             </div>
           `;
         });
@@ -666,13 +669,7 @@
           <td>${t.assignee}</td>
           <td><span class="status-badge ${isRevising ? '' : st.class}" style="${isRevising ? 'background:#FEE2E2; color:#DC2626;' : ''}">${isRevising ? '修正中' : st.label}</span></td>
           <td>
-            ${isRevising ? '<span style="color:#DC2626; font-weight:bold;">修正中</span>' : 
-            `<div style="display:flex; align-items:center; gap:8px;">
-              <div style="width:70px; height:6px; background:#E2E8F0; border-radius:10px; overflow:hidden;">
-                <div style="width:${t.progress}%; height:100%; background:${st.color};"></div>
-              </div>
-              <span style="font-weight:600; font-size:0.8rem;">${t.progress}%</span>
-            </div>` }
+            ${isRevising ? '<span style="color:#DC2626; font-weight:bold;">修正中</span>' : `<span style="font-weight:600; font-size:1.1rem; color:var(--brand-primary);">${t.progress}%</span>`}
           </td>
           <td>${actionHtml}</td>
         `;
@@ -969,7 +966,7 @@
               <span>${t.progress}%</span>
             </div>
           </td>
-          <td>${t.isRoutine ? '🔄 ルーティン' : 'ワンショット'}</td>
+          <td>${t.deadline || '未設定'}</td>
           <td>
             <button class="view-mode-btn" style="padding:4px 10px; font-size:0.8rem;" onclick="openEditTaskModal(${t.id})">
               編集
@@ -999,7 +996,8 @@
       if(!list) return;
       list.innerHTML = '';
 
-      const visibleTasks = tasks.filter(t => t.inTree === false);
+      const currentUserAssignee = '山田 太郎'; // Mock user
+      const visibleTasks = tasks.filter(t => t.type === 'personal' ? t.assignee === currentUserAssignee : t.dept === currentDept);
 
       visibleTasks.forEach(t => {
         const item = document.createElement('div');
@@ -1011,6 +1009,7 @@
           e.dataTransfer.setData('text/plain', t.id);
           e.dataTransfer.effectAllowed = 'move';
         };
+        item.onclick = () => openEditTaskModal(t.id);
         item.innerHTML = `
           <div style="font-weight:700; font-size:0.9rem; margin-bottom:4px;">${t.title}</div>
           <div style="font-size:0.75rem; color:var(--text-secondary);">締切: ${t.deadline || '未定'}</div>
