@@ -85,7 +85,7 @@
 タスクのページでタスクタブを全画面に展開した時にタスクの1アイテムの境界線がわかりにくい
 タスク1アイテムのカードを強調してわかりやすくして
 
-
+CHECK ((type = ANY (ARRAY['business'::text, 'personal'::text, 'initiative'::text])))
 
 
 SELECT conname, pg_get_constraintdef(oid)
