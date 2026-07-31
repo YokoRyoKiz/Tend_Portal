@@ -2006,6 +2006,7 @@
         <select id="top-task-dept-filter" class="form-select" style="max-width: 240px;" onchange="renderTopPageTable()">
           <option value="all">すべての事業部</option>
         </select>
+        <button id="admin-assign-task-btn" class="action-btn-primary" style="display: none; padding: 6px 14px; font-size: 0.85rem; background: #0EA5E9; font-weight: 600; border-radius: 6px;" onclick="openAdminAssignTaskModal()">➕ タスク割り当て</button>
       </div>
 
       <div class="table-card">
@@ -2237,6 +2238,39 @@
       <div style="display: flex; gap: 10px;">
         <button type="button" class="view-mode-btn" style="flex: 1;" onclick="cancelSubmitConfirm()">キャンセル</button>
         <button type="button" class="action-btn-primary" style="flex: 1;" onclick="confirmSubmitTask()">提出する</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADMIN ASSIGN TASK MODAL -->
+  <div class="modal-overlay" id="admin-assign-task-modal" style="z-index: 1100;">
+    <div class="modal-card" style="max-width: 480px;">
+      <button class="modal-close-btn" onclick="closeModal('admin-assign-task-modal')">&times;</button>
+      <h3 class="modal-title" style="margin-bottom: 20px;">管理者タスク割り当て（事務タスク）</h3>
+
+      <div class="form-group" style="margin-bottom: 14px;">
+        <label class="form-label" style="font-weight: 600;">タスクのタイトル <span style="color:#EF4444;">*</span></label>
+        <input type="text" id="admin-assign-task-title" class="form-input" placeholder="例: 月次データ集計・報告書作成">
+      </div>
+
+      <div class="form-group" style="margin-bottom: 14px;">
+        <label class="form-label" style="font-weight: 600;">担当者 <span style="color:#EF4444;">*</span></label>
+        <select id="admin-assign-task-assignee" class="form-select"></select>
+      </div>
+
+      <div class="form-group" style="margin-bottom: 14px;">
+        <label class="form-label" style="font-weight: 600;">締め切り</label>
+        <input type="date" id="admin-assign-task-deadline" class="form-input">
+      </div>
+
+      <div class="form-group" style="margin-bottom: 20px;">
+        <label class="form-label" style="font-weight: 600;">コメント（指示・備考）</label>
+        <textarea id="admin-assign-task-comment" class="form-input" style="height: 80px; resize: vertical;" placeholder="担当者への指示や留意事項を入力..."></textarea>
+      </div>
+
+      <div style="display: flex; gap: 10px; justify-content: flex-end;">
+        <button type="button" class="action-btn-secondary" onclick="closeModal('admin-assign-task-modal')">キャンセル</button>
+        <button type="button" class="action-btn-primary" style="background: #0EA5E9;" onclick="saveAdminAssignTaskModal()">割り当てる</button>
       </div>
     </div>
   </div>
@@ -2922,6 +2956,10 @@
         if (memberTab) {
           memberTab.style.display = (currentUserRole === 'manager') ? 'inline-flex' : 'none';
         }
+        const assignBtn = document.getElementById('admin-assign-task-btn');
+        if (assignBtn) {
+          assignBtn.style.display = (currentUserRole === 'manager') ? 'inline-flex' : 'none';
+        }
 
         const deptBar = document.querySelector('.dept-selector-bar');
         if (currentUserRole === 'manager') {
@@ -3003,6 +3041,19 @@
             monthlyTargetSales: d.monthly_target_sales,
             monthlySales: d.monthly_sales
           }));
+          if (!departments.some(d => d.id === '44444444-4444-4444-4444-444444444444')) {
+            departments.push({ id: '44444444-4444-4444-4444-444444444444', name: '全事業部', annualTargetSales: 0, monthlyTargetSales: 0, annualSales: 0, monthlySales: 0 });
+            if (sbClient) {
+              sbClient.from('departments').upsert({
+                id: '44444444-4444-4444-4444-444444444444',
+                name: '全事業部',
+                annual_target_sales: 0,
+                monthly_target_sales: 0,
+                annual_sales: 0,
+                monthly_sales: 0
+              }).then(({ error }) => { if (error) console.error('Dept upsert notice:', error); });
+            }
+          }
           departmentsFromDb = true; 
         }
 
@@ -3447,13 +3498,23 @@
     function initDeptSelect() {
       const select = document.getElementById('form-member-dept');
       if(!select) return;
+      const current = select.value;
       select.innerHTML = '';
-      departments.forEach(d => {
+      
+      let list = [...departments];
+      if (!list.some(d => d.id === '44444444-4444-4444-4444-444444444444')) {
+        list.push({ id: '44444444-4444-4444-4444-444444444444', name: '全事業部' });
+      }
+
+      list.forEach(d => {
         const opt = document.createElement('option');
         opt.value = d.id;
         opt.innerText = d.name;
         select.appendChild(opt);
       });
+      if (current && Array.from(select.options).some(o => o.value === current)) {
+        select.value = current;
+      }
     }
 
     function initTopTaskDeptFilter() {
@@ -3475,7 +3536,7 @@
           <td style="font-weight: 500;">${u.name}</td>
           <td>${u.login_id || ''}</td>
           <td>${u.role === 'manager' ? '<span class="status-badge" style="background:#DBEAFE; color:#1E40AF;">管理者</span>' : '<span class="status-badge" style="background:#FEF3C7; color:#92400E;">学生</span>'}</td>
-          <td>${departments.find(d => d.id === u.department_id)?.name || ''}</td>
+          <td>${departments.find(d => d.id === u.department_id)?.name || (u.department_id === '44444444-4444-4444-4444-444444444444' ? '全事業部' : '未設定')}</td>
           <td style="display: flex; gap: 4px;">
             <button class="view-mode-btn" style="padding: 4px 8px; font-size: 0.8rem; height: auto;" onclick="editMember('${u.id}')">編集</button>
             <button class="btn-danger-outline" style="padding: 4px 8px; font-size: 0.8rem; height: auto;" onclick="deleteMember('${u.id}')">削除</button>
@@ -3501,7 +3562,7 @@
       document.getElementById('form-member-name').value = '';
       document.getElementById('form-member-login-id').value = '';
       document.getElementById('form-member-role').value = 'student';
-      if(departments.length > 0) document.getElementById('form-member-dept').value = departments[0].name;
+      if(departments.length > 0) document.getElementById('form-member-dept').value = departments[0].id;
       document.getElementById('btn-save-member').innerText = '登録する';
     }
 
@@ -3524,10 +3585,34 @@
         department_id: department_id
       };
 
+      if (department_id === '44444444-4444-4444-4444-444444444444' && sbClient) {
+        try {
+          await sbClient.from('departments').upsert({
+            id: '44444444-4444-4444-4444-444444444444',
+            name: '全事業部',
+            annual_target_sales: 0,
+            monthly_target_sales: 0,
+            annual_sales: 0,
+            monthly_sales: 0
+          });
+        } catch(e) {
+          console.warn(e);
+        }
+      }
+
       try {
         if (id) {
           const { error } = await sbQuery(() => sbClient.from('users').update(payload).eq('id', id));
           if (error) {
+            if (error.code === '23503' && department_id === '44444444-4444-4444-4444-444444444444') {
+              const { error: err2 } = await sbQuery(() => sbClient.from('users').update({ ...payload, department_id: null }).eq('id', id));
+              if (!err2) {
+                const userIdx = users.findIndex(u => u.id === id);
+                if(userIdx !== -1) users[userIdx] = { ...users[userIdx], ...payload };
+                initUserSelect(); initAssigneeSelect(); renderMembersList(); clearMemberForm();
+                return;
+              }
+            }
             alert('メンバー更新に失敗しました。');
             console.error(error);
             return;
@@ -3539,6 +3624,14 @@
         } else {
           const { data, error } = await sbQuery(() => sbClient.from('users').insert([payload]).select());
           if (error) {
+            if (error.code === '23503' && department_id === '44444444-4444-4444-4444-444444444444') {
+              const { data: data2, error: err2 } = await sbQuery(() => sbClient.from('users').insert([{ ...payload, department_id: null }]).select());
+              if (!err2 && data2 && data2.length > 0) {
+                users.push({ ...data2[0], department_id: payload.department_id });
+                initUserSelect(); initAssigneeSelect(); renderMembersList(); clearMemberForm();
+                return;
+              }
+            }
             alert('メンバー追加に失敗しました。');
             console.error(error);
             return;
@@ -4203,25 +4296,19 @@
       deptTasks.filter(t => !isMarkerType(t)).forEach(t => {
         const st = statusMap[t.status];
         const note = document.createElement('div');
-        const ratio = t.progress / 100;
+        const ratio = t.status === 'completed' ? 1 : (Math.max(0, Math.min(100, t.progress || 0)) / 100);
 
-        const colorMap = {
-          'sticky-yellow': { r: 250, g: 204, b: 21  },
-          'sticky-blue':   { r: 56,  g: 189, b: 248 },
-          'sticky-green':  { r: 74,  g: 222, b: 128 },
-          'sticky-purple': { r: 192, g: 132, b: 252 }
-        };
-        const theme = t.stickyColor || 'sticky-yellow';
-        const base = colorMap[theme] || colorMap['sticky-yellow'];
-        // Higher progress -> lower saturation; fully complete -> pure white.
-        const minRatio = 0;
-        const blendRatio = t.status === 'completed' ? 0 : Math.max(minRatio, 1 - ratio);
-        const bgR = Math.round(255 + (base.r - 255) * blendRatio);
-        const bgG = Math.round(255 + (base.g - 255) * blendRatio);
-        const bgB = Math.round(255 + (base.b - 255) * blendRatio);
-        const bgColor = `rgb(${bgR},${bgG},${bgB})`;
-        const borderAlpha = t.status === 'completed' ? 0.15 : (0.4 + blendRatio * 0.6);
-        const borderColor = `rgba(${base.r},${base.g},${base.b},${borderAlpha})`;
+        // Desaturation logic:
+        // Basic color is warm yellow (sticky-yellow).
+        // 0% progress -> Hue 50, Saturation 92%, Lightness 82% (vibrant yellow sticky note)
+        // 100% progress -> Saturation drops to 0%, Lightness 96% (desaturated off-white/light grey)
+        const sat = Math.round((1 - ratio) * 92);
+        const light = Math.round(82 + ratio * 14);
+        const bgColor = `hsl(50, ${sat}%, ${light}%)`;
+
+        const borderSat = Math.round((1 - ratio) * 85);
+        const borderLight = Math.round(52 + ratio * 32);
+        const borderColor = `hsl(48, ${borderSat}%, ${borderLight}%)`;
 
         note.className = `sticky-note-node ${t.status === 'submitted' ? 'submitted' : ''}`;
         note.id = `sticky-node-${t.id}`;
@@ -4935,6 +5022,81 @@
     function addAdminTask() {
       openAddTaskModal();
       window.pendingParentId = null;
+    }
+
+    function openAdminAssignTaskModal() {
+      document.getElementById('admin-assign-task-title').value = '';
+      document.getElementById('admin-assign-task-deadline').value = '';
+      document.getElementById('admin-assign-task-comment').value = '';
+      
+      const assigneeSelect = document.getElementById('admin-assign-task-assignee');
+      assigneeSelect.innerHTML = users.map(u => `<option value="${u.id}">${u.name}</option>`).join('');
+      if (currentUserId && users.some(u => u.id === currentUserId)) {
+        assigneeSelect.value = currentUserId;
+      } else if (users.length > 0) {
+        assigneeSelect.value = users[0].id;
+      }
+
+      document.getElementById('admin-assign-task-modal').classList.add('active');
+    }
+
+    function saveAdminAssignTaskModal() {
+      const title = document.getElementById('admin-assign-task-title').value.trim();
+      const assignee_id = document.getElementById('admin-assign-task-assignee').value;
+      const deadline = document.getElementById('admin-assign-task-deadline').value;
+      const comment = document.getElementById('admin-assign-task-comment').value.trim();
+
+      if (!title) {
+        alert('タスクのタイトルを入力してください');
+        return;
+      }
+
+      const assignee = users.find(u => u.id === assignee_id);
+      const targetDeptId = assignee?.department_id || currentDept || (departments[0]?.id || '');
+
+      const colors = ['sticky-yellow', 'sticky-blue', 'sticky-green', 'sticky-purple'];
+      const randomColor = colors[Math.floor(Math.random() * colors.length)];
+
+      const deptTasks = tasks.filter(t => t.department_id === targetDeptId && !isMarkerType(t));
+      const orphanCount = deptTasks.filter(t => !t.parentId).length;
+      const defaultX = ADMIN_ZONE_X + 10;
+      const defaultY = ADMIN_ZONE_Y + 60 + orphanCount * 100;
+
+      const newTask = {
+        id: generateId(),
+        department_id: targetDeptId,
+        title: title,
+        assignee_id: assignee_id,
+        type: 'business',
+        status: 'unstarted',
+        progress: 0,
+        deadline: deadline,
+        comment: comment,
+        note: '',
+        stickyColor: randomColor,
+        isApprovalRequired: true,
+        routineType: 'none',
+        routineDay: 'Monday',
+        routineTime: '05:00',
+        isRoutine: false,
+        isToday: true,
+        priority: 'mid',
+        inTree: true,
+        x: defaultX,
+        y: defaultY,
+        parentId: null
+      };
+
+      tasks.push(newTask);
+      if (sbClient) {
+        sbClient.from('tasks').insert(toDbTaskPayload(newTask)).then(({ error }) => {
+          if (error) console.error(error);
+        });
+      }
+
+      closeModal('admin-assign-task-modal');
+      renderAllViews();
+      renderInteractiveWhiteboard();
     }
 
     function openEditTaskModal(id) {
